@@ -1,0 +1,3279 @@
+<!DOCTYPE html>
+<!-- СОБРАНО build.ps1 03.08.2026 04:05 · исходники: index.html + css/style.css + js/*.js -->
+<!--
+  ============================================================================
+  ОТКРЫТИЕ ПУТИ / ВІДКРИТТЯ ШЛЯХУ · Genesis Solar Life
+  index.html — ТОЛЬКО каркас. Все тексты подставляются из языковых файлов,
+  поэтому здесь почти нет слов: элементы заполняются в applyLanguage().
+  ----------------------------------------------------------------------------
+    css/style.css        все цвета, анимации, печать
+    js/config.js         настройки: таймер, режим подсчёта, языки
+    js/content-ru.js     весь русский текст
+    js/content-ua.js     весь украинский текст
+    js/script.js         логика
+    build.ps1            собирает всё в один файл dist/index.html
+  ============================================================================
+-->
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#07090E">
+<meta name="color-scheme" content="dark">
+<title>ОТКРЫТИЕ ПУТИ | Genesis Solar Life</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23FBF5B7'/%3E%3Cstop offset='0.5' stop-color='%23D4AF37'/%3E%3Cstop offset='1' stop-color='%238A6417'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath fill='url(%23g)' d='M32 2 62 32 32 62 2 32Z'/%3E%3Cpath fill='%2307090E' d='M32 17 47 32 32 47 17 32Z'/%3E%3C/svg%3E">
+<style>
+/* ============================================================================
+   ОТКРЫТИЕ ПУТИ · Genesis Solar Life
+   style.css — ВСЯ визуальная часть. Логики здесь нет.
+   ----------------------------------------------------------------------------
+   Хотите поменять цвет / шрифт / отступы — вам нужен ТОЛЬКО этот файл.
+   Все цвета вынесены в переменные в блоке :root ниже — правьте их,
+   и цвет поменяется разом во всём приложении.
+   ============================================================================ */
+
+/* ============================================================
+   0. ПАЛИТРА — правьте здесь
+   ============================================================ */
+:root{
+  /* --- Фон (глубокий графит) --- */
+  --bg:            #07090E;   /* самый тёмный слой страницы   */
+  --bg-2:          #0B0E14;   /* фон под карточками           */
+  --card:          #12161E;   /* фон карточки экрана          */
+  --card-2:        #161B24;   /* фон вложенных блоков         */
+  --card-3:        #1B212C;   /* фон при наведении            */
+  --border:        #2A313D;   /* обычная рамка                */
+  --border-soft:   #21272F;   /* рамка потише                 */
+
+  /* --- ЗОЛОТО Genesis Solar (премиальный металлик) --- */
+  --gold-hi:       #FFF8D6;   /* блик, самая светлая точка    */
+  --gold-light:    #FBF5B7;   /* светлое золото               */
+  --gold-warm:     #FFE39A;   /* тёплое золото                */
+  --gold:          #E5C158;   /* базовое золото               */
+  --gold-core:     #D4AF37;   /* классическое золото Genesis  */
+  --gold-deep:     #B38728;   /* глубокая тень золота         */
+  --gold-dark:     #8A6417;   /* тёмная бронза                */
+
+  /* Металлический градиент: используется на кнопках и заголовках.
+     Ширина 300% + анимация = эффект «переливается». */
+  --grad-gold: linear-gradient(115deg,
+      #8A6417  0%,  #B38728 12%, #D4AF37 24%, #E5C158 33%,
+      #FBF5B7 41%,  #FFF8D6 47%, #FBF5B7 53%, #E5C158 62%,
+      #D4AF37 74%,  #B38728 87%, #8A6417 100%);
+
+  /* --- Медали приоритетов --- */
+  --silver-hi:     #FFFFFF;
+  --silver:        #C0C0C0;
+  --silver-deep:   #7D8590;
+  --bronze-hi:     #F0B27A;
+  --bronze:        #CD7F32;
+  --bronze-deep:   #8A5522;
+
+  /* --- Акценты и статусы --- */
+  --amber:         #FF9F1C;
+  --red:           #FF4D4D;
+  --emerald:       #2FBF71;
+  --emerald-deep:  #17663D;
+  --sapphire:      #4C8DFF;
+  --sapphire-deep: #1D3F8F;
+  --violet:        #A06BFF;
+
+  /* --- Текст --- */
+  --text:          #F0F6FC;
+  --text-2:        #D3DCE6;
+  --muted:         #8B949E;
+
+  /* --- Геометрия --- */
+  --radius:        18px;
+  --radius-sm:     13px;
+  --shadow:        0 26px 70px rgba(0,0,0,.65);
+  --glow-gold:     0 0 32px rgba(212,175,55,.35);
+
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", "Segoe UI Mono", "Roboto Mono", Menlo, Consolas, monospace;
+
+  color-scheme: dark;          /* тёмные системные поля, скроллбары, автозаполнение */
+}
+
+/* ============================================================
+   1. БАЗА
+   ============================================================ */
+*, *::before, *::after{ box-sizing:border-box; margin:0; padding:0; }
+
+html{
+  background:var(--bg);        /* тёмный фон даже за пределами body (overscroll) */
+  -webkit-text-size-adjust:100%;
+}
+
+body{
+  font-family:var(--font);
+  color:var(--text);
+  line-height:1.55;
+  min-height:100vh;
+  padding:24px 14px calc(48px + env(safe-area-inset-bottom));
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+
+  /* ---- ФАКТУРА: 4 слоя, снизу вверх ----
+     1) ромбовидная сетка (заметная, но не кричащая)
+     2) золотое сияние сверху
+     3) холодная подсветка снизу
+     4) базовый графит                                        */
+  background-color:var(--bg);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34' height='60' viewBox='0 0 34 60'%3E%3Cg fill='none' stroke='%23D4AF37' stroke-width='1'%3E%3Cpath stroke-opacity='0.16' d='M17 0 L34 30 L17 60 L0 30 Z'/%3E%3Cpath stroke-opacity='0.07' d='M17 12 L27 30 L17 48 L7 30 Z'/%3E%3C/g%3E%3Ccircle cx='17' cy='30' r='1.1' fill='%23D4AF37' fill-opacity='0.20'/%3E%3C/svg%3E"),
+    radial-gradient(1100px 620px at 50% -260px, rgba(212,175,55,.16), transparent 72%),
+    radial-gradient(900px 700px at 50% 118%, rgba(76,141,255,.07), transparent 70%),
+    linear-gradient(180deg, #0A0D13 0%, #07090E 100%);
+  background-repeat:repeat, no-repeat, no-repeat, no-repeat;
+  background-size:34px 60px, auto, auto, auto;
+  background-attachment:fixed;  /* фактура не «уезжает» при прокрутке */
+}
+
+/* Виньетка — притемняет края, вытягивает центр вперёд */
+body::before{
+  content:"";
+  position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background:radial-gradient(120% 80% at 50% 40%, transparent 45%, rgba(0,0,0,.55) 100%);
+}
+
+::selection{ background:rgba(212,175,55,.32); color:#FFF8D6; }
+
+::-webkit-scrollbar{ width:11px; height:11px; }
+::-webkit-scrollbar-track{ background:#0A0D13; }
+::-webkit-scrollbar-thumb{ background:linear-gradient(180deg,var(--gold-deep),var(--gold-dark)); border-radius:99px; border:3px solid #0A0D13; }
+::-webkit-scrollbar-thumb:hover{ background:linear-gradient(180deg,var(--gold),var(--gold-deep)); }
+
+.app{ width:100%; max-width:860px; margin:0 auto; }
+.hidden{ display:none !important; }
+.spacer-s{ height:12px }
+.spacer-m{ height:20px }
+
+/* ============================================================
+   2. ЗОЛОТОЙ ПЕРЕЛИВ (главный премиум-приём)
+   ============================================================ */
+.shimmer-text{
+  background:var(--grad-gold);
+  background-size:300% 100%;
+  -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent; color:var(--gold-core);
+  animation:shimmer 7s linear infinite;
+}
+@keyframes shimmer{
+  0%  { background-position:0% 50%; }
+  100%{ background-position:300% 50%; }
+}
+
+/* Бегущий блик поверх кнопок */
+@keyframes sheen{
+  0%  { transform:translateX(-120%) skewX(-20deg); }
+  55% { transform:translateX(320%)  skewX(-20deg); }
+  100%{ transform:translateX(320%)  skewX(-20deg); }
+}
+
+/* ============================================================
+   3. ШАПКА И ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКА
+   ============================================================ */
+.brand{ text-align:center; margin-bottom:26px; position:relative; }
+
+.lang-switch{
+  display:inline-flex; gap:3px; padding:3px; margin-bottom:16px;
+  background:rgba(255,255,255,.03);
+  border:1px solid var(--border);
+  border-radius:999px;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.45);
+}
+.lang-btn{
+  font-family:inherit; font-size:.76rem; font-weight:800; letter-spacing:1.5px;
+  padding:7px 16px; border-radius:999px; border:none; cursor:pointer;
+  background:transparent; color:var(--muted);
+  transition:color .2s ease, background .25s ease, box-shadow .25s ease;
+}
+.lang-btn:hover{ color:var(--gold-light); }
+.lang-btn.active{
+  color:#211603;
+  background:var(--grad-gold); background-size:300% 100%;
+  animation:shimmer 6s linear infinite;
+  box-shadow:0 2px 12px rgba(212,175,55,.4), inset 0 1px 0 rgba(255,255,255,.5);
+}
+.lang-btn:focus-visible{ outline:2px solid var(--gold-warm); outline-offset:2px; }
+
+.brand-tag{
+  display:inline-block;
+  font-size:.67rem; letter-spacing:4px; font-weight:800; text-transform:uppercase;
+  color:var(--gold-core);
+  padding-bottom:8px;
+  position:relative;
+}
+.brand-tag::after{
+  content:""; position:absolute; left:12%; right:12%; bottom:0; height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold-core),transparent);
+}
+
+.brand-title{
+  font-size:clamp(2rem, 8.5vw, 3.4rem);
+  font-weight:800; letter-spacing:.07em; line-height:1.08;
+  margin-top:12px;
+  filter:drop-shadow(0 2px 18px rgba(212,175,55,.28));
+}
+
+.brand-sub{ color:var(--muted); font-size:.95rem; margin-top:12px; }
+
+/* Ромбовидный разделитель */
+.divider{
+  display:flex; align-items:center; justify-content:center; gap:12px;
+  margin:16px auto 0; max-width:320px;
+}
+.divider::before, .divider::after{
+  content:""; flex:1; height:1px;
+  background:linear-gradient(90deg,transparent,rgba(212,175,55,.55),transparent);
+}
+.divider i{
+  width:9px; height:9px; transform:rotate(45deg);
+  background:var(--grad-gold); background-size:300% 100%;
+  animation:shimmer 7s linear infinite;
+  box-shadow:0 0 14px rgba(212,175,55,.6);
+}
+
+/* ============================================================
+   4. КАРТОЧКА ЭКРАНА
+   ============================================================ */
+.screen{
+  position:relative;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.035) 0%, transparent 22%),
+    var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:clamp(20px, 4.2vw, 38px);
+  box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,.05);
+  animation:fadeUp .45s ease both;
+}
+/* Тонкая золотая линия по верхней кромке карточки */
+.screen::before{
+  content:""; position:absolute; left:16%; right:16%; top:-1px; height:1px;
+  background:linear-gradient(90deg,transparent,rgba(212,175,55,.75),transparent);
+}
+
+@keyframes fadeUp{
+  from{ opacity:0; transform:translateY(14px); }
+  to  { opacity:1; transform:none; }
+}
+
+/* ============================================================
+   5. КНОПКИ
+   ============================================================ */
+.btn{
+  position:relative; overflow:hidden;
+  display:block; width:100%; border:none; cursor:pointer;
+  font-family:inherit; font-size:1rem; font-weight:800; letter-spacing:.07em;
+  text-transform:uppercase; text-align:center;
+  padding:18px 22px; border-radius:14px;
+  transition:transform .16s ease, box-shadow .25s ease, opacity .2s ease, filter .2s ease;
+}
+.btn:not(:disabled):hover{ transform:translateY(-2px); }
+.btn:not(:disabled):active{ transform:translateY(0) scale(.996); }
+.btn:disabled{ opacity:.32; cursor:not-allowed; box-shadow:none; filter:saturate(.4); }
+.btn:focus-visible{ outline:2px solid var(--gold-warm); outline-offset:3px; }
+
+/* Бегущий блик — общий для всех цветных кнопок */
+.btn::after{
+  content:""; position:absolute; top:-60%; left:0; width:38%; height:220%;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
+  animation:sheen 4.5s ease-in-out infinite;
+  pointer-events:none;
+}
+.btn:disabled::after{ display:none; }
+
+/* --- ЗОЛОТАЯ КНОПКА --- */
+.btn-gold{
+  color:#211603;
+  background:var(--grad-gold);
+  background-size:300% 100%;
+  animation:shimmer 6s linear infinite;
+  box-shadow:0 8px 26px rgba(212,175,55,.30), inset 0 1px 0 rgba(255,255,255,.55), inset 0 -2px 0 rgba(0,0,0,.22);
+  text-shadow:0 1px 0 rgba(255,255,255,.35);
+}
+.btn-gold:not(:disabled):hover{ box-shadow:0 12px 38px rgba(212,175,55,.52), inset 0 1px 0 rgba(255,255,255,.6); }
+.btn-gold.pulse{ animation:shimmer 6s linear infinite, breathe 3s ease-in-out infinite; }
+@keyframes breathe{
+  0%,100%{ box-shadow:0 8px 26px rgba(212,175,55,.28), inset 0 1px 0 rgba(255,255,255,.55); }
+  50%    { box-shadow:0 10px 46px rgba(212,175,55,.62), inset 0 1px 0 rgba(255,255,255,.65); }
+}
+
+/* --- ПРОЗРАЧНАЯ КНОПКА --- */
+.btn-ghost{
+  background:rgba(255,255,255,.03); color:var(--text-2);
+  border:1px solid var(--border); font-weight:700; letter-spacing:.05em;
+}
+.btn-ghost::after{ display:none; }
+.btn-ghost:hover{ border-color:var(--gold-core); color:var(--gold-light); background:rgba(212,175,55,.07); }
+
+/* --- ИЗУМРУД (копировать) --- */
+.btn-emerald{
+  color:#F2FFF8;
+  background:linear-gradient(135deg,#3FE08D 0%, var(--emerald) 45%, var(--emerald-deep) 100%);
+  box-shadow:0 8px 26px rgba(47,191,113,.30), inset 0 1px 0 rgba(255,255,255,.35), inset 0 -2px 0 rgba(0,0,0,.25);
+}
+.btn-emerald:not(:disabled):hover{ box-shadow:0 12px 36px rgba(47,191,113,.5); }
+
+/* --- САПФИР (печать) --- */
+.btn-sapphire{
+  color:#F3F8FF;
+  background:linear-gradient(135deg,#7FB2FF 0%, var(--sapphire) 45%, var(--sapphire-deep) 100%);
+  box-shadow:0 8px 26px rgba(76,141,255,.30), inset 0 1px 0 rgba(255,255,255,.35), inset 0 -2px 0 rgba(0,0,0,.25);
+}
+.btn-sapphire:not(:disabled):hover{ box-shadow:0 12px 36px rgba(76,141,255,.5); }
+
+/* ============================================================
+   6. ЭКРАН 1 · СТАРТ
+   ============================================================ */
+.intro-lead{ font-size:1.06rem; color:var(--text-2); margin-bottom:18px; }
+.intro-lead strong{ color:var(--gold-light); font-weight:700; }
+
+.intro-note{
+  position:relative;
+  background:linear-gradient(135deg, rgba(212,175,55,.10), rgba(212,175,55,.02));
+  border:1px solid rgba(212,175,55,.22);
+  border-left:3px solid var(--gold-core);
+  padding:16px 18px; border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+  color:var(--text-2); font-size:.96rem; margin-bottom:22px;
+}
+.intro-note strong{ color:var(--gold-warm); }
+
+.badges{ display:flex; flex-wrap:wrap; gap:9px; margin-bottom:24px; }
+.badge{
+  background:linear-gradient(135deg, rgba(212,175,55,.14), rgba(212,175,55,.04));
+  border:1px solid rgba(212,175,55,.30);
+  color:var(--gold-light);
+  padding:8px 14px; border-radius:999px; font-size:.82rem; font-weight:600;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07);
+}
+
+.field{ margin-bottom:20px; }
+.field label{ display:block; font-size:.85rem; color:var(--muted); margin-bottom:8px; }
+.field input{
+  width:100%; font-family:inherit; font-size:1rem; color:var(--text);
+  background:var(--bg-2); border:1px solid var(--border); border-radius:var(--radius-sm);
+  padding:15px 17px; transition:border-color .2s ease, box-shadow .2s ease;
+}
+.field input::placeholder{ color:#5A636E; }
+.field input:focus{
+  outline:none; border-color:var(--gold-core);
+  box-shadow:0 0 0 3px rgba(212,175,55,.16);
+}
+
+/* ============================================================
+   7. ЭКРАН 2 · ДИАГНОСТИКА
+   ============================================================ */
+.quiz-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:14px; }
+
+.q-counter{
+  font-size:.8rem; letter-spacing:2.5px; font-weight:800; text-transform:uppercase;
+  color:var(--gold-core); padding-top:8px;
+}
+
+.timer-box{ text-align:right; flex:0 0 auto; }
+.timer-digits{
+  font-family:var(--mono); font-weight:800; line-height:.95;
+  font-size:clamp(2.4rem, 10vw, 3.6rem);
+  font-variant-numeric:tabular-nums; letter-spacing:-2px;
+  background:var(--grad-gold); background-size:300% 100%;
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  animation:shimmer 6s linear infinite;
+  filter:drop-shadow(0 0 16px rgba(212,175,55,.35));
+}
+.timer-label{ font-size:.63rem; letter-spacing:3px; color:var(--muted); text-transform:uppercase; margin-top:2px; }
+
+.timer-track{
+  height:9px; border-radius:99px; margin-bottom:8px; overflow:hidden;
+  background:rgba(255,255,255,.06);
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.6);
+}
+.timer-fill{
+  height:100%; width:100%; border-radius:99px;
+  background:var(--grad-gold); background-size:300% 100%;
+  animation:shimmer 6s linear infinite;
+  box-shadow:0 0 14px rgba(212,175,55,.55);
+  transition:width 1s linear, background .6s ease, box-shadow .6s ease;
+}
+
+/* Предупреждение (≤40 c) */
+.state-warn .timer-fill{
+  background:linear-gradient(90deg,#B36A0E,var(--amber),#FFC46B);
+  background-size:300% 100%; box-shadow:0 0 16px rgba(255,159,28,.55);
+}
+.state-warn .timer-digits{
+  background:linear-gradient(115deg,#B36A0E,var(--amber),#FFD79B,var(--amber));
+  background-size:300% 100%; -webkit-background-clip:text; background-clip:text;
+  filter:drop-shadow(0 0 16px rgba(255,159,28,.4));
+}
+/* Опасность (≤15 c) */
+.state-danger .timer-fill{
+  background:linear-gradient(90deg,#8F1D1D,var(--red),#FF9A9A);
+  background-size:300% 100%; box-shadow:0 0 18px rgba(255,77,77,.6);
+}
+.state-danger .timer-digits{
+  background:linear-gradient(115deg,#8F1D1D,var(--red),#FFC2C2,var(--red));
+  background-size:300% 100%; -webkit-background-clip:text; background-clip:text;
+  filter:drop-shadow(0 0 18px rgba(255,77,77,.45));
+  animation:shimmer 6s linear infinite, blink 1s ease-in-out infinite;
+}
+@keyframes blink{ 0%,100%{opacity:1} 50%{opacity:.42} }
+
+.q-track{ height:4px; border-radius:99px; background:rgba(255,255,255,.05); overflow:hidden; margin-bottom:24px; }
+.q-fill{
+  height:100%; width:0; border-radius:99px;
+  background:linear-gradient(90deg,var(--gold-dark),var(--gold-core),var(--gold-light));
+  transition:width .4s cubic-bezier(.4,0,.2,1);
+}
+
+/* Заголовок вопроса. Подсказок под ним нет намеренно — по ТЗ на экране
+   диагностики только сам вопрос и карточки ответов. */
+.q-title{ font-size:clamp(1.12rem, 3.7vw, 1.42rem); font-weight:700; margin-bottom:20px; }
+
+/* --- Карточки вариантов --- */
+.options{ display:flex; flex-direction:column; gap:10px; margin-bottom:24px; }
+.options.swap{ animation:swapIn .35s ease both; }
+@keyframes swapIn{
+  from{ opacity:0; transform:translateX(18px); }
+  to  { opacity:1; transform:none; }
+}
+
+.opt{
+  position:relative; overflow:hidden;
+  display:flex; align-items:center; gap:15px; width:100%; text-align:left;
+  background:linear-gradient(180deg, rgba(255,255,255,.022), transparent), var(--card-2);
+  border:1px solid var(--border-soft);
+  border-radius:var(--radius-sm);
+  padding:15px 17px; cursor:pointer;
+  color:var(--text); font-family:inherit; font-size:.98rem; line-height:1.45;
+  transition:border-color .2s ease, background .2s ease, transform .12s ease, box-shadow .25s ease;
+}
+.opt:hover{ border-color:rgba(212,175,55,.5); background:var(--card-3); }
+.opt:active{ transform:scale(.994); }
+.opt:focus-visible{ outline:2px solid var(--gold-core); outline-offset:2px; }
+
+/* Плашка приоритета */
+.slot{
+  flex:0 0 46px; width:46px; height:46px; border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-size:1.4rem; font-weight:800;
+  border:1px dashed #3B4351; background:rgba(255,255,255,.015); color:#3E4756;
+  transition:all .22s cubic-bezier(.34,1.4,.64,1);
+}
+
+/* 1 место — ЗОЛОТО */
+.opt[data-rank="1"]{
+  border-color:var(--gold-core);
+  background:linear-gradient(135deg, rgba(212,175,55,.14), rgba(212,175,55,.03));
+  box-shadow:0 0 0 1px rgba(212,175,55,.25), 0 8px 26px rgba(212,175,55,.16);
+}
+.opt[data-rank="1"] .slot{
+  border:none; color:#211603; transform:scale(1.06);
+  background:var(--grad-gold); background-size:300% 100%;
+  animation:shimmer 5s linear infinite;
+  box-shadow:0 0 22px rgba(212,175,55,.6), inset 0 1px 0 rgba(255,255,255,.6), inset 0 -2px 0 rgba(0,0,0,.25);
+}
+/* 2 место — СЕРЕБРО */
+.opt[data-rank="2"]{
+  border-color:rgba(192,192,192,.6);
+  background:linear-gradient(135deg, rgba(192,192,192,.11), rgba(192,192,192,.02));
+}
+.opt[data-rank="2"] .slot{
+  border:none; color:#14181E; transform:scale(1.03);
+  background:linear-gradient(135deg,var(--silver-deep) 0%, var(--silver) 35%, var(--silver-hi) 50%, var(--silver) 65%, var(--silver-deep) 100%);
+  background-size:300% 100%; animation:shimmer 5.5s linear infinite;
+  box-shadow:0 0 16px rgba(192,192,192,.4), inset 0 1px 0 rgba(255,255,255,.7), inset 0 -2px 0 rgba(0,0,0,.25);
+}
+/* 3 место — БРОНЗА */
+.opt[data-rank="3"]{
+  border-color:rgba(205,127,50,.65);
+  background:linear-gradient(135deg, rgba(205,127,50,.12), rgba(205,127,50,.02));
+}
+.opt[data-rank="3"] .slot{
+  border:none; color:#20120A;
+  background:linear-gradient(135deg,var(--bronze-deep) 0%, var(--bronze) 35%, var(--bronze-hi) 50%, var(--bronze) 65%, var(--bronze-deep) 100%);
+  background-size:300% 100%; animation:shimmer 6s linear infinite;
+  box-shadow:0 0 16px rgba(205,127,50,.45), inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 0 rgba(0,0,0,.25);
+}
+
+/* ============================================================
+   8. ПЛАВАЮЩЕЕ УВЕДОМЛЕНИЕ
+   ============================================================ */
+.toast{
+  position:fixed; left:50%; bottom:28px; transform:translate(-50%,28px);
+  max-width:min(92vw,460px); z-index:80;
+  background:linear-gradient(135deg, rgba(24,29,38,.97), rgba(15,19,26,.97));
+  border:1px solid rgba(212,175,55,.42);
+  border-radius:var(--radius); padding:17px 22px; text-align:center;
+  box-shadow:0 22px 60px rgba(0,0,0,.7), var(--glow-gold), inset 0 1px 0 rgba(255,255,255,.06);
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  opacity:0; pointer-events:none;
+  transition:opacity .35s ease, transform .35s cubic-bezier(.34,1.3,.64,1);
+}
+.toast.show{ opacity:1; transform:translate(-50%,0); pointer-events:auto; cursor:pointer; }
+.toast-icon{ font-size:1.6rem; line-height:1.2; }
+.toast-text{ color:var(--gold-light); font-weight:600; font-size:.97rem; margin-top:3px; }
+
+/* ============================================================
+   9. ЭКРАН 3 · ВАШ ПУТЬ ОТКРЫТ
+   ============================================================ */
+.result-top{ text-align:center; margin-bottom:28px; }
+.result-chip{
+  display:inline-block; padding:9px 20px; border-radius:999px;
+  background:linear-gradient(135deg, rgba(212,175,55,.16), rgba(212,175,55,.04));
+  border:1px solid rgba(212,175,55,.45); color:var(--gold-light);
+  font-size:.76rem; letter-spacing:2.5px; font-weight:800; text-transform:uppercase;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.09), 0 6px 20px rgba(212,175,55,.14);
+}
+.result-name{ margin-top:15px; font-size:1.02rem; color:var(--muted); }
+.result-name b{ color:var(--text); }
+
+.block{
+  position:relative;
+  background:linear-gradient(180deg, rgba(255,255,255,.02), transparent 30%), var(--card-2);
+  border:1px solid var(--border-soft);
+  border-radius:var(--radius-sm);
+  padding:20px; margin-bottom:16px;
+}
+.block-title{
+  font-size:.75rem; letter-spacing:2.8px; text-transform:uppercase; font-weight:800;
+  color:var(--gold-core); margin-bottom:16px; padding-bottom:12px;
+  border-bottom:1px solid var(--border-soft);
+}
+.sub-label{
+  font-size:.78rem; letter-spacing:1.8px; text-transform:uppercase;
+  color:var(--muted); font-weight:800;
+}
+
+.dream-list{ list-style:none; display:flex; flex-direction:column; gap:11px; margin-top:12px; }
+.dream-list li{ display:flex; gap:13px; align-items:flex-start; font-size:.97rem; color:var(--text-2); }
+.medal{ flex:0 0 auto; font-size:1.25rem; line-height:1.35; }
+
+.quote-line{
+  margin-top:11px; padding:2px 0 2px 15px;
+  border-left:3px solid var(--gold-core); color:var(--text-2); font-size:.97rem;
+}
+
+.split{ display:grid; grid-template-columns:1fr; gap:18px; }
+
+.vector-name{
+  font-size:clamp(1.5rem, 5.5vw, 2.15rem); font-weight:800; line-height:1.14;
+  margin:7px 0 5px;
+  filter:drop-shadow(0 2px 14px rgba(212,175,55,.22));
+}
+.vector-name.silver{
+  background:linear-gradient(115deg, var(--silver-deep), var(--silver) 35%, #FFFFFF 50%, var(--silver) 65%, var(--silver-deep));
+  background-size:300% 100%;
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  color:var(--silver); animation:shimmer 7s linear infinite;
+  filter:drop-shadow(0 2px 14px rgba(192,192,192,.18));
+}
+.vector-score{ font-family:var(--mono); font-size:.85rem; color:var(--muted); margin-bottom:11px; }
+.vector-desc{ color:var(--text-2); font-size:.97rem; }
+.vector-desc b{ color:var(--gold-warm); }
+
+/* --- Гистограмма --- */
+.bars{ display:flex; flex-direction:column; gap:12px; }
+.bar-row{ display:grid; grid-template-columns:1fr auto; gap:5px 10px; align-items:center; }
+.bar-name{ font-size:.9rem; font-weight:600; color:var(--text-2); }
+.bar-val{ font-family:var(--mono); font-size:.8rem; color:var(--muted); }
+.bar-track{
+  grid-column:1 / -1; height:10px; border-radius:99px; overflow:hidden;
+  background:rgba(255,255,255,.05); box-shadow:inset 0 1px 3px rgba(0,0,0,.55);
+}
+.bar-fill{
+  height:100%; border-radius:99px; width:0;
+  background:linear-gradient(90deg,var(--gold-dark),var(--gold-deep));
+  transition:width .9s cubic-bezier(.2,.8,.2,1);
+}
+.bar-row.top .bar-name{ color:var(--gold-light); font-weight:700; }
+.bar-row.top .bar-fill{
+  background:var(--grad-gold); background-size:300% 100%;
+  animation:shimmer 6s linear infinite; box-shadow:0 0 14px rgba(212,175,55,.55);
+}
+.bar-row.second .bar-name{ color:#E4E8EC; }
+.bar-row.second .bar-fill{
+  background:linear-gradient(115deg,var(--silver-deep),var(--silver),#FFFFFF,var(--silver),var(--silver-deep));
+  background-size:300% 100%; animation:shimmer 7s linear infinite;
+}
+
+/* --- Плашки суперсилы / выгорания --- */
+.pill-grid{ display:grid; grid-template-columns:1fr; gap:13px; }
+.pill{
+  border:1px solid var(--border-soft); border-radius:var(--radius-sm);
+  padding:16px; background:rgba(255,255,255,.018);
+}
+.pill h4{ font-size:.73rem; letter-spacing:2.2px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; font-weight:800; }
+.pill p{ font-size:.95rem; color:var(--text-2); }
+.pill.power{
+  border-color:rgba(212,175,55,.4);
+  background:linear-gradient(135deg, rgba(212,175,55,.10), rgba(212,175,55,.02));
+}
+.pill.power h4{ color:var(--gold-core); }
+.pill.burn{
+  border-color:rgba(255,77,77,.32);
+  background:linear-gradient(135deg, rgba(255,77,77,.09), rgba(255,77,77,.015));
+}
+.pill.burn h4{ color:#FF9494; }
+
+/* --- Индекс готовности --- */
+.gauge{ margin-top:14px; }
+.gauge-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:9px; gap:12px; }
+.gauge-value{ font-family:var(--mono); font-size:1.9rem; font-weight:800; line-height:1; }
+.gauge-track{
+  height:14px; border-radius:99px; overflow:hidden;
+  background:rgba(255,255,255,.05); box-shadow:inset 0 1px 4px rgba(0,0,0,.6);
+}
+.gauge-fill{
+  height:100%; border-radius:99px; width:0;
+  transition:width 1.1s cubic-bezier(.2,.8,.2,1);
+  background:var(--grad-gold); background-size:300% 100%;
+  animation:shimmer 6s linear infinite;
+  box-shadow:0 0 16px rgba(212,175,55,.5);
+}
+.gauge.lvl-mid  .gauge-fill{ background:linear-gradient(90deg,#B36A0E,var(--amber),#FFD79B); background-size:300% 100%; box-shadow:0 0 16px rgba(255,159,28,.5); }
+.gauge.lvl-low  .gauge-fill{ background:linear-gradient(90deg,#8F1D1D,var(--red),#FFB4B4);  background-size:300% 100%; box-shadow:0 0 16px rgba(255,77,77,.5); }
+.gauge.lvl-high .gauge-value{ color:var(--gold-light); }
+.gauge.lvl-mid  .gauge-value{ color:var(--amber); }
+.gauge.lvl-low  .gauge-value{ color:var(--red); }
+.gauge-note{ margin-top:11px; font-size:.93rem; color:var(--text-2); }
+
+/* --- Списки задач --- */
+.task-list{ list-style:none; display:flex; flex-direction:column; gap:9px; margin-top:12px; }
+.task-list li{ position:relative; padding-left:22px; font-size:.95rem; color:var(--text-2); }
+.task-list li::before{
+  content:""; position:absolute; left:2px; top:.55em;
+  width:8px; height:8px; transform:rotate(45deg);
+  background:var(--grad-gold); background-size:300% 100%;
+  animation:shimmer 6s linear infinite;
+}
+
+/* --- Бумажная рефлексия --- */
+.reflect-list{ counter-reset:r; list-style:none; display:flex; flex-direction:column; gap:16px; margin-top:8px; }
+.reflect-list li{ counter-increment:r; position:relative; padding-left:42px; font-size:.95rem; color:var(--text-2); }
+.reflect-list li::before{
+  content:counter(r); position:absolute; left:0; top:0;
+  width:28px; height:28px; border-radius:9px;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:.82rem; color:#211603;
+  background:var(--grad-gold); background-size:300% 100%;
+  animation:shimmer 6s linear infinite;
+  box-shadow:0 0 14px rgba(212,175,55,.35);
+}
+.write-line{ display:block; height:27px; margin-top:7px; border-bottom:1px dashed #3B4351; }
+
+.actions{ display:flex; flex-direction:column; gap:11px; margin:22px 0 16px; }
+
+.legal{ text-align:center; font-size:.78rem; color:#5A636E; margin-top:22px; line-height:1.6; }
+
+/* ============================================================
+   10. АДАПТИВНОСТЬ
+   ============================================================ */
+@media (min-width:720px){
+  .split{ grid-template-columns:1fr 1fr; gap:26px; }
+  .pill-grid{ grid-template-columns:1fr 1fr; }
+  .actions{ flex-direction:row; }
+  .actions .btn{ flex:1; }
+}
+@media (min-width:1400px){
+  .app{ max-width:960px; }
+}
+@media (max-width:360px){
+  .slot{ flex-basis:40px; width:40px; height:40px; font-size:1.2rem; }
+  .opt{ gap:12px; padding:13px 14px; font-size:.94rem; }
+}
+
+/* Уважение к системной настройке «меньше движения» */
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{
+    animation-duration:.001ms !important; animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+  }
+}
+
+/* ============================================================
+   11. ПЕЧАТЬ / PDF
+   ============================================================ */
+@media print{
+  @page{ margin:12mm; }
+  html, body{ background:#fff !important; color:#111 !important; }
+  body{ padding:0; background-image:none !important; }
+  body::before{ display:none !important; }
+  .app{ max-width:100%; }
+  .no-print, .btn, .toast, #screen-intro, #screen-quiz, .brand-sub, .divider{ display:none !important; }
+
+  .screen, .block, .pill{
+    background:#fff !important; border:1px solid #BBB !important;
+    box-shadow:none !important; break-inside:avoid; page-break-inside:avoid;
+  }
+  .screen::before{ display:none !important; }
+  .brand-title, .vector-name, .vector-name.silver, .gauge-value{
+    -webkit-text-fill-color:#8A6417 !important; color:#8A6417 !important;
+    background:none !important; animation:none !important; filter:none !important;
+  }
+  .brand-tag, .block-title, .result-chip{ color:#8A6417 !important; }
+  .result-chip{ border-color:#8A6417 !important; background:none !important; }
+  .vector-desc, .pill p, .task-list li, .reflect-list li, .quote-line, .dream-list li, .gauge-note{ color:#111 !important; }
+  .sub-label, .bar-val, .vector-score, .pill h4, .result-name{ color:#555 !important; }
+  .bar-track, .gauge-track{ background:#EEE !important; border:1px solid #CCC; box-shadow:none !important; }
+  .bar-fill, .gauge-fill{ background:#8A6417 !important; animation:none !important; box-shadow:none !important; }
+  .task-list li::before{ background:#8A6417 !important; animation:none !important; }
+  .reflect-list li::before{
+    background:none !important; color:#8A6417 !important;
+    border:1px solid #8A6417; box-shadow:none !important; animation:none !important;
+  }
+  .write-line{ border-bottom:1px solid #999; }
+  .legal{ color:#777 !important; }
+}
+
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ==================== ШАПКА ==================== -->
+  <header class="brand">
+    <div class="lang-switch no-print" id="lang-switch"></div>
+    <div class="brand-tag" id="brand-tag"></div>
+    <h1 class="brand-title shimmer-text" id="brand-title"></h1>
+    <div class="divider"><i></i></div>
+    <p class="brand-sub" id="brand-sub"></p>
+  </header>
+
+  <!-- ==================== ЭКРАН 1 · СТАРТ ==================== -->
+  <section id="screen-intro" class="screen">
+    <p class="intro-lead" id="intro-lead"></p>
+    <div class="intro-note" id="intro-note"></div>
+    <div class="badges" id="intro-badges"></div>
+
+    <div class="field">
+      <label for="user-name" id="name-label"></label>
+      <input id="user-name" type="text" maxlength="40" autocomplete="name" spellcheck="false">
+    </div>
+
+    <button id="btn-start"  class="btn btn-gold pulse"></button>
+    <button id="btn-resume" class="btn btn-ghost hidden" style="margin-top:11px"></button>
+    <button id="btn-last"   class="btn btn-ghost hidden" style="margin-top:11px"></button>
+
+    <p class="legal" id="intro-legal"></p>
+  </section>
+
+  <!-- ==================== ЭКРАН 2 · ВОПРОСЫ ====================
+       По ТЗ: только заголовок вопроса и карточки. Никаких подсказок
+       и пояснений рядом с вопросом. -->
+  <section id="screen-quiz" class="screen hidden">
+    <div class="quiz-top">
+      <div class="q-counter" id="q-counter"></div>
+      <div class="timer-box">
+        <div class="timer-digits" id="timer-digits">88</div>
+        <div class="timer-label" id="timer-label"></div>
+      </div>
+    </div>
+
+    <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
+    <div class="q-track"><div class="q-fill" id="q-fill"></div></div>
+
+    <h2 class="q-title" id="q-title"></h2>
+
+    <div class="options" id="options"></div>
+
+    <button id="btn-next" class="btn btn-gold" disabled></button>
+  </section>
+
+  <!-- ==================== ЭКРАН 3 · РЕЗУЛЬТАТ ====================
+       Содержимое генерируется в js/script.js → renderResult() -->
+  <section id="screen-result" class="screen hidden"></section>
+
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <div class="toast-icon" id="toast-icon">✨</div>
+  <div class="toast-text" id="toast-text"></div>
+</div>
+
+<script>
+// ===== config.js =====
+/* ============================================================================
+   ОТКРЫТИЕ ПУТИ · Genesis Solar Life
+   config.js — НАСТРОЙКИ приложения. Ни текстов, ни логики здесь нет.
+   ----------------------------------------------------------------------------
+   Самый маленький файл проекта и самый важный: почти всё поведение
+   приложения настраивается отсюда, без правки кода.
+   ============================================================================ */
+
+window.appConfig = {
+
+  /* --- Языки ---------------------------------------------------------------
+     Порядок = порядок кнопок в переключателе. Чтобы добавить третий язык:
+     создать js/content-XX.js по образцу и дописать сюда 'XX'.            */
+  languages:   ['ru', 'ua'],
+  defaultLang: 'ru',
+
+  /* --- Таймер --------------------------------------------------------- */
+  timeLimit: 88,        // секунд на вопрос
+  warnAt:    40,        // с этой секунды шкала жёлтая
+  dangerAt:  15,        // с этой секунды красная
+
+  /* --- Подсчёт баллов -------------------------------------------------------
+     'count'    — 1 балл за любой выбранный вариант, приоритет не важен.
+                  Максимум по вектору = число вопросов в подсчёте (13).
+                  Такой режим задан в ТЗ.
+     'weighted' — по приоритету: 1 место = 3 балла, 2 = 2, 3 = 1.
+                  Максимум по вектору = 13 × 3 = 39. Тоньше различает
+                  близкие векторы, но требует, чтобы человек честно
+                  расставлял именно порядок, а не просто отмечал три.
+     Меняется одним словом, пересчёт и проценты подстроятся сами.        */
+  scoring: 'weighted',
+  weights: [3, 2, 1],   // используется только при scoring: 'weighted'
+
+  /* --- Сколько вариантов отмечает участник ---------------------------------
+     Значение по умолчанию для всех вопросов. Отдельному вопросу можно
+     задать своё поле picks (так сделано у вопроса 16 — там один выбор). */
+  picksDefault: 3,
+
+  /* --- Какие вопросы попадают в результат дословно -------------------------
+     Указываются id вопросов из content-*.js                             */
+  transcript: {
+    dream:      17,     // чего ты уже достиг — 3 ответа по приоритетам
+    price:      18,     // сколько времени объективно нужно — 1 ответ
+    commitment: 19,     // сколько реально готов вкладывать — 1 ответ
+    income:     20      // желаемый уровень дохода — 1 ответ
+  },
+
+  /* --- Триггерные вопросы психологического профиля --------------------------
+     Расширенный профиль собирается не из баллов, а из КОНКРЕТНЫХ ответов
+     на эти четыре вопроса. Указываются id, поэтому при перестановке
+     вопросов достаточно поправить числа здесь — движок не тронут.       */
+  triggers: {
+    sabotage: 6,        // причина прошлых срывов  → паттерн саботажа
+    pressure: 11,       // вечер перед дедлайном   → копинг-стиль
+    tradeoff: 14,       // чем готов пожертвовать  → операционный профиль
+    shadow:   16        // голос мечты             → состояние «на сейчас»
+  },
+
+  /* --- Индекс готовности ----------------------------------------------------
+     Ориентировочные часы в день для каждого варианта вопросов 14 и 15.
+     Ключ = порядковый номер варианта (1–8). Нужны только для расчёта
+     соотношения «цена мечты ↔ личный вклад».                            */
+  hoursByType: { 1: 1.5, 2: 3, 3: 5.5, 4: 8, 5: 4, 6: 3, 7: 2.5, 8: 8 },
+
+  /* --- Хранилище браузера --------------------------------------------- */
+  storeKey: 'genesis_path_v7'
+};
+
+</script>
+<script>
+// ===== content-ru.js =====
+/* ============================================================================
+   ОТКРЫТИЕ ПУТИ · Genesis Solar Life
+   content-ru.js — ВЕСЬ РУССКИЙ ТЕКСТ приложения.
+   ----------------------------------------------------------------------------
+   Один язык = один файл. Украинский лежит в content-ua.js и устроен
+   точно так же. Чтобы добавить третий язык — скопируйте этот файл,
+   переведите строки и допишите код языка в js/config.js.
+
+   ПРАВИЛА:
+     1. Число вопросов и число вариантов в каждом вопросе должно СОВПАДАТЬ
+        во всех языковых файлах — иначе переключение языка сломается.
+        Совпадение проверяется автоматически, ошибки видны в консоли (F12).
+     2. type = номер вектора 1–8, внутри вопроса не повторяется.
+     3. scored: false — вопрос показывается и попадает в результат дословно,
+        но баллов вектору не даёт.
+     4. picks: 1 — в вопросе выбирается один вариант, а не три.
+     5. Глаголы, обращённые к участнику, пишутся с обоими окончаниями:
+        прожил(а), готов(а), достиг(ла).
+   ============================================================================ */
+
+window.CONTENT = window.CONTENT || {};
+
+window.CONTENT.ru = {
+
+/* ============================================================
+   ИНТЕРФЕЙС
+   ============================================================ */
+ui: {
+  code: 'ru',
+  label: 'RU',
+  labelFull: 'Русский',
+
+  brandTag:   'Genesis Solar Life · Project Edition',
+  brandTitle: 'ОТКРЫТИЕ ПУТИ',
+  brandSub:   'Глубинная диагностика личности и твоего потенциала',
+
+  intro: {
+    lead: 'Перед тобой <strong>20 вопросов</strong>. Это не экзамен — здесь нет правильных и неправильных ответов. Есть только твоя правда о себе.',
+    note: 'Отключи контролирующий ум. Не анализируй и не просчитывай, «как будет лучше выглядеть». Отвечай по <strong>первому внутреннему импульсу</strong> — именно он знает о тебе больше, чем все твои объяснения. На каждый вопрос даётся 88 секунд: этого достаточно для честности и слишком мало для игры в правильность.',
+    badges: ['◆ 20 вопросов', '◆ 88 секунд на вопрос', '◆ Приоритеты 1 · 2 · 3', '◆ 8 векторов личности'],
+    nameLabel:       'Как тебя зовут? (необязательно — имя попадёт в отчёт для наставника)',
+    namePlaceholder: 'Участник',
+    start:  'Начать диагностику',
+    resume: '▸ Продолжить с вопроса {n} из {m}',
+    last:   '↺ Открыть прошлый результат',
+    legal:  'Все данные остаются в этом браузере. Никуда не отправляются, никем не собираются.'
+  },
+
+  quiz: {
+    counter:    'Вопрос {n} из {m}',
+    timerLabel: 'секунд',
+    picked:     'Отмечено {n} из {m}',
+    next:       'Далее →',
+    finish:     'Ваш путь открыт'
+  },
+
+  toast: {
+    timeout:  'Доверься первому импульсу! Выбери самые откликающиеся варианты',
+    full:     'Все приоритеты заняты. Кликни по цифре, чтобы освободить место',
+    copied:   'Отчёт скопирован — вставь его наставнику в Telegram или SMS',
+    copyFail: 'Скопировать автоматически не вышло. Выдели текст вручную',
+    changed:  'Вопросы изменились с прошлого раза — начинаем заново'
+  },
+
+  result: {
+    chip:      '✦ Ваш путь открыт',
+    dateLine:  '{name} · {date}',
+
+    block1:    '1 · Блок главных решений',
+    dream:     'Чего я уже достиг(ла) — вопрос №{id}',
+    price:     '🎯 Объективная цена мечты — вопрос №{id}',
+    commit:    '⚡ Мой личный момент истины — вопрос №{id}',
+    income:    '💰 Мой уровень свободы — вопрос №{id}',
+    gauge:     'Индекс готовности · {title}',
+    gaugeHint: 'Ориентировочно: цена мечты ≈ {need} ч/день, твой заявленный вклад ≈ {give} ч/день.',
+
+    block2:      '2 · Психологический профиль',
+    leadLabel:   'Ведущий вектор',
+    subLabel:    'Дополняющий вектор',
+    score:       '{s} из {m} баллов · {p}%',
+    synergyWord: 'Синергия:',
+    synergyText: 'в связке с ведущим вектором «{lead}» он {text}',
+    mixedWord:   'Смешанный профиль:',
+    mixedText:   'два вектора набрали одинаковый балл. Это значит, что ты одинаково силён(на) в обоих — и выбирать роль стоит не по тесту, а по тому, какая задача сейчас нужнее проекту.',
+    histogram:   'Гистограмма 8 векторов',
+    power:       '⚡ Суперсила',
+    burnout:     '🔥 Зона выгорания',
+
+    block3:    '5 · Реализация в Genesis Solar Life',
+    direction: 'Твоё направление',
+    tasks:     'Сферы ответственности и задачи',
+    allyTitle: '🤝 Идеальная командная связка',
+    allyText:  'Твой прямой партнёр — человек с вектором <b>«{sub}»</b>: он {text}',
+    allyMore:  'Также усиливают тебя: <b>{list}</b>.',
+
+    block4:  '8 · Бумажная рефлексия — ручкой, без телефона',
+    copy:    'Скопировать отчёт наставнику',
+    print:   'Сохранить / Распечатать',
+    restart: '↺ Пройти заново',
+    legal:   'Сформировано автоматически · Genesis Solar Life · {date}'
+  },
+
+  /* Пороги идут сверху вниз: берётся первый, у которого min ≤ значения */
+  readiness: [
+    { min: 90, title: 'Полное совпадение',
+      note: 'Ты готов(а) платить за мечту ровно ту цену, которую сам(а) же и назвал(а). Это редкость: обычно между «нужно» и «готов» лежит пропасть. Задача теперь одна — не снизить темп на второй неделе.' },
+    { min: 65, title: 'Небольшой разрыв',
+      note: 'Ты почти дотягиваешь до собственной планки. Разрыв закрывается не героизмом, а расписанием: найди недостающее время в конкретном часе конкретного дня и защити его от всего остального.' },
+    { min: 40, title: 'Значительный разрыв',
+      note: 'Между ценой мечты и твоим вкладом — заметная дистанция. Это не приговор, но выбор: либо увеличить вклад, либо честно уменьшить масштаб. Худший вариант — оставить всё как есть и потом объяснять себе, почему не получилось.' },
+    { min: 0,  title: 'Критический разрыв',
+      note: 'Сегодня твоя мечта и твой реальный вклад живут в разных мирах. Само это осознание уже полезнее любого мотивационного текста. Начни не с восьми часов, а с одного честного часа в день — и удержи его 30 дней подряд.' }
+  ],
+
+  reflect: [
+    'Какую одну задачу из зоны твоего ведущего вектора «{lead}» ты берёшь на себя уже на этой неделе? Сформулируй её одним предложением — так, чтобы в пятницу можно было проверить: сделано или нет.',
+    'Твой Индекс готовности — {readiness}%. Что конкретно ты уберёшь из своего дня, чтобы освободить недостающее время? Напиши, от чего именно отказываешься.',
+    'Выпиши 3 дела, которые ты делаешь каждый день и которые НЕ приближают тебя к мечте. Отметь то, от которого откажешься первым, и поставь дату.',
+    'Кто из твоего окружения обладает дополняющим вектором «{sub}»? Напиши имя и то, что ты предложишь этому человеку в течение ближайшей недели.',
+    'Твоя зона выгорания названа выше. По какому первому признаку ты поймёшь, что входишь в неё, и какое одно действие совершишь в этот момент?'
+  ],
+
+  report: {
+    title:     '📋 ВАШ ПУТЬ ОТКРЫТ | Genesis Solar Life',
+    user:      'Пользователь: {name}',
+    date:      'Дата: {date}',
+    s1:        '1. ЧЕГО Я УЖЕ ДОСТИГ(ЛА) (Из Вопроса №{id}):',
+    p1:        '🥇 1 приоритет: ',
+    p2:        '🥈 2 приоритет: ',
+    p3:        '🥉 3 приоритет: ',
+    s2:        '2. ЦЕНА МЕЧТЫ VS ЛИЧНАЯ ГОТОВНОСТЬ (Из Вопросов №{a} и №{b}):',
+    need:      '🎯 Объективно нужно человеку в день:',
+    give:      '⚡ Мой личный вклад с сегодняшнего дня:',
+    income:    '💰 Желаемый уровень дохода:',
+    readiness: '📊 Индекс готовности: {v}% ({title})',
+    s3:        '3. ПСИХОЛОГИЧЕСКИЙ ПРОФИЛЬ:',
+    leadLine:  '• Ведущий вектор: {name} ({score} б.)',
+    subLine:   '• Дополняющий вектор: {name} ({score} б.)',
+    powerLine: '• Моя Суперсила: {text}',
+    burnLine:  '• Риск выгорания: {text}',
+    s4:        '4. МОЯ ИДЕАЛЬНАЯ РОЛЬ В GENESIS SOLAR LIFE:',
+    roleLine:  '• Направление: {role} — {tasks}.',
+    allyLine:  '• Идеальная связка: нужен партнёр с психотипом {name}.',
+    s5:        '5. СОСТОЯНИЕ НА СЕЙЧАС:',
+    s6:        '6. СТРЕСС-ПРОФИЛЬ И ПАТТЕРН САБОТАЖА:',
+    s7:        '7. КАК ПРОЯВЛЯЮСЬ В ПРОЕКТЕ:',
+    s8:        '8. ПРАВИЛА БЕЗОПАСНОСТИ:',
+    footer:    'Готовность действовать подтверждена. Путь открыт.'
+  }
+},
+
+/* ============================================================================
+   РАСШИРЕННЫЙ ПСИХОЛОГИЧЕСКИЙ ПРОФИЛЬ
+   ----------------------------------------------------------------------------
+   Собирается не из баллов, а из конкретных ответов на четыре триггерных
+   вопроса (их id заданы в config.js → triggers). Ключ каждого блока —
+   номер вектора выбранного варианта.
+
+   Тон: клиническая точность без токсичного позитива и без гадания.
+   Говорим человеку то, что он сам о себе сказал, — вслух и без смягчений,
+   но с уважением к взрослой позиции и всегда с выходом.
+   ============================================================================ */
+psych: {
+
+  ui: {
+    stateTitle:   '3 · Твоё состояние на сейчас',
+    stateLead:    'Что сказала твоя мечта — и что за этим стоит',
+    stressTitle:  '4 · Стресс-профиль и паттерн саботажа',
+    stressStop:   'Как ты себя останавливаешь',
+    stressCope:   'Что ты включаешь под давлением',
+    stressRisk:   'Риск этого стиля',
+    projectTitle: '6 · Как ты проявляешься в проекте',
+    projectRole:  'Роль в структуре',
+    projectDeleg: 'Делегирование и ответственность',
+    projectFric:  'Точки трения',
+    projectPrice: 'Чем ты готов(а) заплатить',
+    safetyTitle:  '7 · Правила безопасности — три шага',
+    safetyAvoid:  '1 · Чего категорически не делать',
+    safetyMetric: '2 · Что контролировать каждый день',
+    safetyDeleg:  '3 · Что отдать партнёрам',
+    echoSame:     'Тень бьёт ровно в твой ведущий вектор «{lead}». Это не совпадение: сила и слабое место у человека почти всегда растут из одного корня. Работать нужно не над другим качеством, а над дозировкой этого.',
+    echoDiff:     'Тень говорит голосом вектора «{shadow}», а ведёт тебя «{lead}». Это разрыв: ты требуешь от себя того, что не является твоей сильной стороной. Часть тревоги уйдёт, как только перестанешь мерить себя чужой линейкой.',
+    disclaimer:   'Этот раздел — не диагноз. Это то, что ты сам(а) о себе сказал(а) в вопросах {q}, прочитанное вслух.'
+  },
+
+  /* Блок 1 · Состояние на сейчас — по ответу на вопрос о голосе мечты */
+  shadow: {
+    1: { title: 'Страх обесценивания замысла',
+         text: 'Идей у тебя больше, чем у любого вокруг, но каждая новая обесценивает предыдущую раньше, чем ты успеваешь её проверить. Это не лень и не «нет дисциплины» — это защита: незапущенная идея не может провалиться. Пока ты не позволишь одной из них быть несовершенной и живой, остальные останутся в голове.' },
+    2: { title: 'Синдром самозванца в роли ведущего',
+         text: 'Снаружи ты тот, за кем идут. Внутри — человек, который не уверен, что сам знает дорогу. Этот разрыв съедает больше сил, чем сама работа. Уверенность ведущего — не про знание маршрута, а про готовность отвечать за поворот; это у тебя уже есть.' },
+    3: { title: 'Паралич анализа',
+         text: 'Ты держишь в голове больше вариантов, чем способен(на) проверить, и каждый новый анализ отодвигает первое движение. Мышление стало убежищем: пока решение не принято, оно не может оказаться ошибочным. Нужны не данные, а меньший размер шага, который ты разрешишь себе сделать без полной картины.' },
+    4: { title: 'Выгорание помогающего',
+         text: 'Ты отдаёшь людям столько тепла, что на себя не остаётся. И чем меньше остаётся, тем труднее показать усталость — от тебя ждут опоры. Это не благородство, а долг, который однажды предъявят к оплате. Разрешить себе быть неидеальным для других — твоя первая задача, а не последняя.' },
+    5: { title: 'Гиперконтроль и фоновая тревога',
+         text: 'Ты держишь всё на себе не из любви к власти, а потому что не веришь: без твоего взгляда рассыплется. Часто этот опыт реален — тебя уже подводили. Но цена такой надёжности — постоянное напряжение и потолок, выше которого один человек физически не поднимет.' },
+    6: { title: 'Потеря смысла за цифрами',
+         text: 'Показатели растут, а внутри пусто. Цифра стала единственным понятным ответом на вопрос «всё ли правильно», потому что смысл труднее измерить. Это кризис не бизнеса, а ответа на вопрос «зачем», и деньгами он не закрывается.' },
+    7: { title: 'Одиночество среди людей',
+         text: 'Вокруг тебя всегда люди, и при этом ты не уверен(а), что хоть одна связь выдержит проверку. Ты научился(лась) быть нужным(ой) и почти разучился(лась) быть просто собой рядом с кем-то. Один честный разговор без пользы для дела сейчас важнее десяти новых знакомств.' },
+    8: { title: 'Усталость идеалиста',
+         text: 'Ты долго держишь то, что большинству вокруг безразлично, и начинаешь злиться на людей за глухоту. Отсюда полшага до цинизма — самой опасной для тебя точки: без веры в смысл ты теряешь топливо. Нужны не единомышленники вообще, а один-два человека, которые видят то же самое.' }
+  },
+
+  /* Блок 2а · Паттерн саботажа — по ответу о причине прошлого срыва */
+  sabotage: {
+    1: { title: 'Бегство в новизну',
+         text: 'На финишной прямой прежнее дело перестаёт вдохновлять — и ты уходишь в новую идею, оставляя позади почти готовое. Механизм прост: новое обещает, старое требует. Рядом с тобой обязан быть человек, который доводит.' },
+    2: { title: 'Героическая перегрузка',
+         text: 'Ты забираешь больше, чем может вынести один человек, потому что так быстрее и надёжнее. В итоге выгораешь сам(а) и лишаешь команду и права на ошибку, и права на вклад.' },
+    3: { title: 'Упущенное окно',
+         text: 'Ты считаешь до тех пор, пока считать уже нечего — возможность закрылась. Осторожность в твоём случае маскирует страх необратимого шага, а не недостаток информации.' },
+    4: { title: 'Спасательство',
+         text: 'Чужая беда для тебя всегда срочнее собственной задачи. Ты закрываешь эмоциональные дыры окружающих и приходишь к своему сроку пустым(ой).' },
+    5: { title: 'Перфекционистский стопор',
+         text: 'То, что уже работало, ты не выпустил(а), потому что «ещё не идеально». Доведение деталей — способ отложить момент, когда работу увидят и оценят.' },
+    6: { title: 'Преждевременная капитуляция',
+         text: 'Ты вышел(ла), когда риск стал выше расчётной выгоды. Иногда это зрелость, иногда — привычка защищать имеющееся ценой всего возможного.' },
+    7: { title: 'Расфокус на связях',
+         text: 'Энергия ушла на поддержание отношений, а главное осталось без хозяина. Ты был(а) нужен всем — и в итоге никому конкретно.' },
+    8: { title: 'Принципиальная изоляция',
+         text: 'Ты не пошёл(шла) на компромисс и остался(лась) прав(а) — но один. Принципы стоят дорого, и счёт нередко оплачивает именно тот проект, ради которого ты их защищал(а).' }
+  },
+
+  /* Блок 2б · Копинг под давлением — по ответу о вечере перед дедлайном */
+  pressure: {
+    1: { title: 'Креативный прорыв',
+         text: 'Под давлением ты не паникуешь, а переизобретаешь: ограничения включают у тебя нестандартное мышление.',
+         risk: 'Решение может быть блестящим, но неисполнимым чужими руками. Проверяй его на воспроизводимость без себя.' },
+    2: { title: 'Мобилизация',
+         text: 'Ты собираешь людей, берёшь ответственность и идёшь до конца — в кризисе команда держится на тебе.',
+         risk: 'Ты быстро расходуешь чужой ресурс. После авралов проверяй, кто выгорел: тебе об этом не скажут.' },
+    3: { title: 'Триаж',
+         text: 'Ты мгновенно отделяешь критичное от второстепенного и делаешь только то, что спасает ситуацию.',
+         risk: 'В спешке отсекается то, что казалось второстепенным, а держало конструкцию. Проговаривай отсечённое вслух.' },
+    4: { title: 'Опора на связь',
+         text: 'Ты идёшь к человеку — и через контакт возвращаешь себе силу и ясность мысли.',
+         risk: 'Если такого человека рядом не окажется, кризис ударит вдвое сильнее. Договорись о таком контакте заранее.' },
+    5: { title: 'Процедурный якорь',
+         text: 'Ты переводишь панику в список и идёшь по пунктам — структура держит тебя лучше любой мотивации.',
+         risk: 'Список может увести в аккуратное исполнение неверного плана. Раз в час поднимай голову и сверяй цель.' },
+    6: { title: 'Спасение стоимости',
+         text: 'Ты ищешь, что можно сохранить, продать или монетизировать прямо сейчас, чтобы не потерять всё.',
+         risk: 'Так спасают деньги и теряют репутацию. Проверяй, не продаёшь ли будущее ради настоящего.' },
+    7: { title: 'Мобилизация сети',
+         text: 'Ты поднимаешь связи, и помощь приходит оттуда, откуда её никто не ждал.',
+         risk: 'Ресурс сети конечен. Считай, сколько раз ты просил(а) и сколько раз давал(а) сам(а).' },
+    8: { title: 'Этический стоп-кран',
+         text: 'Ты проверяешь спасение на соответствие ценностям и готов(а) принять честное поражение.',
+         risk: 'Иногда это принципиальность, а иногда — способ выйти из невыносимого напряжения. Различай эти два состояния.' }
+  },
+
+  /* Блок 3б · Цена мечты — по ответу о жёстком выборе */
+  tradeoff: {
+    1: { title: 'Готов(а) отдать стабильность',
+         text: 'Ты меняешь предсказуемость на возможность. Значит, тебя нельзя ставить туда, где нужна гарантия результата любой ценой: твоё место — фронтир, тыл прикроют другие.' },
+    2: { title: 'Готов(а) отдать комфорт',
+         text: 'Ты жертвуешь отдыхом ради цели — сильный ресурс и одновременно главный риск. Восстановление тебе нужно планировать так же жёстко, как задачи.' },
+    3: { title: 'Готов(а) отдать импульс',
+         text: 'Ты выбираешь расчёт вместо эмоции. Это делает тебя надёжным(ой) в решениях и уязвимым(ой) там, где нужно вдохновить, а не убедить.' },
+    4: { title: 'Готов(а) отдать одобрение',
+         text: 'Ты принимаешь, что тебя не поймут, — редкая зрелость. Следи только, чтобы она не превратилась в глухоту к обратной связи.' },
+    5: { title: 'Готов(а) отдать свободу действий',
+         text: 'Ты выбираешь дисциплину и рамку. Это ускоряет команду, но требует, чтобы рамку задал тот, кому ты действительно доверяешь.' },
+    6: { title: 'Готов(а) отдать идеализм',
+         text: 'Ты выбираешь окупаемость вместо красивых идей. Сильная позиция — пока рядом есть тот, кто удерживает смысл.' },
+    7: { title: 'Готов(а) отдать широкий круг',
+         text: 'Ты сужаешь охват ради глубины, а значит впереди период, когда станет тише. Реши заранее, кого оставляешь рядом.' },
+    8: { title: 'Готов(а) отдать быструю выгоду',
+         text: 'Ты выбираешь длинную дистанцию. Это твоя сила и твоя проверка: длинные проекты требуют промежуточных побед, иначе выдыхается команда.' }
+  },
+
+  /* Блок 3а · Операционный профиль — по ведущему вектору */
+  role: {
+    1: { role: 'Визионер продукта',
+         delegation: 'Исполнение ты отдаёшь легко, авторство — с трудом. Отпускай идею в чужие руки раньше, чем она станет идеальной.',
+         friction: 'Регламенты, отчётность, повторяющиеся операции и люди, которым нужно объяснять «зачем» по третьему кругу.' },
+    2: { role: 'Лидер-двигатель направления',
+         delegation: 'Ты делегируешь задачи, но не ответственность, и забираешь её обратно при первом сбое. Учись отдавать право на ошибку.',
+         friction: 'Пассивность, бесконечные согласования и люди, которые ждут инструкции вместо решения.' },
+    3: { role: 'Стратег-конструктор',
+         delegation: 'Ты доверяешь тем, кто мыслит системно, и не доверяешь «на глазок». Проси не результат, а логику решения — так отпустишь спокойнее.',
+         friction: 'Спешка, решения без данных и требование ответить прямо сейчас.' },
+    4: { role: 'Наставник и связка людей',
+         delegation: 'Задачи ты отдаёшь легко, людей — тяжело: кажется, что без тебя их не услышат. Это и есть твоя зона роста.',
+         friction: 'Жёсткая конкуренция внутри команды, обесценивание чувств, отношение к людям как к ресурсу.' },
+    5: { role: 'Системный операционист',
+         delegation: 'Ты тянешь на себе, потому что уверен(а): сделают хуже. Отдавай не задачу, а стандарт — тогда качество перестанет зависеть от тебя.',
+         friction: 'Импровизация без предупреждения, срыв договорённостей, «потом разберёмся».' },
+    6: { role: 'Держатель коммерческого контура',
+         delegation: 'Ты отдаёшь всё, что не влияет на деньги, и держишь всё, что влияет. Риск — не заметить, как вместе с делегированным ушёл смысл.',
+         friction: 'Долгие разговоры без цифр, проекты «ради идеи», размытая ответственность за результат.' },
+    7: { role: 'Архитектор связей',
+         delegation: 'Ты охотно подключаешь людей и плохо доводишь начатое сам(а). Рядом нужен тот, кто закрывает хвосты.',
+         friction: 'Изоляция, работа без обратной связи, закрытые команды и формальное общение.' },
+    8: { role: 'Хранитель миссии и стандартов',
+         delegation: 'Ты отдашь что угодно, кроме права оценивать решения по совести. Так и договаривайся: не контроль над всем, а право вето по ценностям.',
+         friction: 'Компромиссы ради скорости, «все так делают», цинизм и двойные стандарты.' }
+  },
+
+  /* Блок 4 · Правила безопасности — по ведущему вектору */
+  safety: {
+    1: { avoid:    'Не бери длинные операционные обязательства и не обещай сроков по рутине — сорвёшь и потеряешь доверие.',
+         metric:   'Дни подряд на одной задаче без переключения на новую идею. Считай серию, как спортсмен.',
+         delegate: 'Доведение до результата, регламенты и всё, что нужно повторять одинаково.' },
+    2: { avoid:    'Не забирай задачу обратно при первом сбое исполнителя — так гарантированно вырастишь пассивную команду.',
+         metric:   'Сколько решений за день приняли без тебя. Растёт — ты справляешься.',
+         delegate: 'Детали, качество исполнения и всё, что требует терпения к мелочам.' },
+    3: { avoid:    'Не откладывай запуск до полной ясности — «ещё немного данных» в твоём случае длится бесконечно.',
+         metric:   'Часы от принятого решения до первого действия. Держи меньше суток.',
+         delegate: 'Быстрые операционные решения и общение с людьми в моменте.' },
+    4: { avoid:    'Не бери роль, где нужно регулярно принимать непопулярные решения о людях, — она тебя разрушит.',
+         metric:   'Сколько часов за день ушло на чужие задачи вместо твоей. Больше половины — тревожный знак.',
+         delegate: 'Жёсткие переговоры, отказы и контроль дисциплины.' },
+    5: { avoid:    'Не входи в проект на стадии хаоса без полномочий — будешь отвечать за то, чем не управляешь.',
+         metric:   'Число ручных вмешательств за день. Падает — система заработала.',
+         delegate: 'Генерацию идей, публичную коммуникацию и первые непроверенные гипотезы.' },
+    6: { avoid:    'Не соглашайся быть вдохновителем команды — выгоришь, изображая энтузиазм, которого не чувствуешь.',
+         metric:   'Отношение потраченных часов к деньгам, которые они принесли. Считай раз в неделю.',
+         delegate: 'Смысловую рамку проекта и работу с мотивацией людей.' },
+    7: { avoid:    'Не бери задачи, которые нужно делать одному и долго, — выдохнешься к середине.',
+         metric:   'Сколько дел сегодня доведено до конца, а не начато. Считай завершения, не контакты.',
+         delegate: 'Финальное исполнение, документы и всё, что требует тишины и усидчивости.' },
+    8: { avoid:    'Не участвуй в том, что противоречит твоим ценностям, даже временно и «ради общего дела» — цена всегда выше расчётной.',
+         metric:   'Совпадение сегодняшних действий с тем, ради чего ты в проекте. Одна честная оценка вечером.',
+         delegate: 'Коммерческие переговоры и решения, где нужен холодный расчёт без оценки по совести.' }
+  }
+},
+
+/* ============================================================
+   8 ВЕКТОРОВ
+   ============================================================ */
+types: {
+  1: {
+    name: 'Инноватор (Творец)',
+    tagline: 'Креатив, продукты, уникальные идеи, нестандартные концепции',
+    desc: 'Ты мыслишь возможностями там, где другие видят ограничения. Твой ум постоянно пересобирает реальность: ты замечаешь пустые ниши, недостающие детали и очевидные для тебя решения, до которых почему-то никто не додумался. Тебе тесно в готовых рамках — ты приходишь не повторять, а создавать то, чего ещё не было.',
+    synergy: 'приносит свежий взгляд и нестандартный ход там, где привычная логика упирается в стену — с ним у проекта появляется то, чего нет у конкурентов.',
+    power: 'Рождать работающие идеи из пустоты и превращать смутный внутренний импульс в конкретный продукт.',
+    burnout: 'Однообразие, жёсткие рамки, скучная рутина и запрет на инициативу. Когда от тебя требуют механически повторять одно и то же — ты гаснешь за считанные недели.',
+    role: 'Продуктовое ядро и R&D',
+    tasks: [
+      'Разработка новых продуктов, услуг и форматов экосистемы',
+      'Упаковка смыслов: названия, концепции, визуальный язык проекта',
+      'Быстрые прототипы и пилотные эксперименты перед масштабированием'
+    ],
+    allies: [3, 5]
+  },
+  2: {
+    name: 'Доминатор (Лидер)',
+    tagline: 'Масштаб, влияние, управление, мотивация масс',
+    desc: 'Ты берёшь ответственность раньше, чем тебя об этом попросят. Люди чувствуют в тебе опору и идут за тобой, потому что рядом с тобой у них появляется смелость, которой не было наедине с собой. Масштаб — твоя естественная среда: мелкие цели тебя не будят, а большие включают на полную.',
+    synergy: 'добавляет волю к масштабу и способность вести людей — с ним замысел перестаёт быть личным делом и становится движением.',
+    power: 'Вести людей к результату, поднимать планку и удерживать энергию команды на подъёме даже в трудный период.',
+    burnout: 'Безволие вокруг, отсутствие амбициозных целей и невозможность влиять на решения. Ты гаснешь там, где от тебя ждут послушания вместо силы.',
+    role: 'Лидерство направлений и сборка команд',
+    tasks: [
+      'Формирование команд и постановка амбициозных целей направления',
+      'Мотивация, удержание темпа и командной культуры',
+      'Принятие ключевых решений и защита интересов проекта вовне'
+    ],
+    allies: [4, 5]
+  },
+  3: {
+    name: 'Архитектор (Стратег)',
+    tagline: 'Аналитика, видение будущего, проектирование систем',
+    desc: 'Ты видишь конструкцию раньше, чем стены. Твоя сила — просчитывать последствия на годы вперёд, соединять разрозненные факты в цельную картину и принимать решения не по эмоции, а по логике будущего. Твои решения кажутся окружающим излишне медленными ровно до того момента, когда время подтверждает твою правоту.',
+    synergy: 'приносит холодный расчёт и длинную дистанцию — с ним решения перестают быть ставкой и становятся планом.',
+    power: 'Превращать хаос данных в ясную стратегию и видеть развилки задолго до того, как в них упрутся остальные.',
+    burnout: 'Хаотичные метания без понимания конечной цели, решения «на бегу» и отсутствие горизонта планирования.',
+    role: 'Стратегия, аналитика и проектирование систем',
+    tasks: [
+      'Дорожные карты направлений и модели роста экосистемы',
+      'Оценка рисков, приоритизация задач и распределение ресурсов',
+      'Проектирование внутренней архитектуры проекта на годы вперёд'
+    ],
+    allies: [1, 7]
+  },
+  4: {
+    name: 'Эмпат (Наставник)',
+    tagline: 'Раскрытие потенциала людей, обучение, эмоциональный климат',
+    desc: 'Ты слышишь человека раньше, чем он произнесёт слово. Твой главный интерес — не задача, а тот, кто её делает. Ты умеешь возвращать людям веру в себя, и именно через людей приходит твой собственный результат. Там, где ты появляешься, человек перестаёт бояться быть собой.',
+    synergy: 'добавляет человеческое тепло и удерживает людей рядом тогда, когда становится по-настоящему трудно.',
+    power: 'Раскрывать потенциал и создавать среду, в которой человек становится сильнее, чем был до встречи с тобой.',
+    burnout: 'Холодное отношение к людям, равнодушие и восприятие сотрудников как винтиков механизма.',
+    role: 'Наставничество, обучение и климат команды',
+    tasks: [
+      'Сопровождение и адаптация новых участников проекта',
+      'Обучающие программы, разборы и передача опыта',
+      'Диагностика выгорания и удержание здорового климата в командах'
+    ],
+    allies: [2, 5]
+  },
+  5: {
+    name: 'Систематизатор (Организатор)',
+    tagline: 'Порядок, алгоритмы, регламенты, оптимизация',
+    desc: 'Ты не выносишь бардак — и не из педантизма, а потому что видишь, сколько сил и денег он съедает. Там, где появляешься ты, возникают правила, роли и понятная последовательность действий. Ты делаешь сложное повторяемым, а разовый успех — управляемым процессом.',
+    synergy: 'закрепляет результат: превращает вспышку в процесс и не даёт системе рассыпаться на следующем витке роста.',
+    power: 'Превращать разовый успех в стабильный процесс, который работает и без твоего постоянного присутствия.',
+    burnout: 'Вечный бардак, невыполненные обещания и отсутствие базовой структуры вокруг.',
+    role: 'Операционное управление и процессы',
+    tasks: [
+      'Регламенты, инструкции и стандарты работы направлений',
+      'Контроль качества, сроков и исполнительской дисциплины',
+      'Оптимизация процессов и устранение потерь ресурсов'
+    ],
+    allies: [1, 2]
+  },
+  6: {
+    name: 'Прагматик (Предприниматель)',
+    tagline: 'Капитал, окупаемость, финансовая эффективность',
+    desc: 'Для тебя идея становится реальной только тогда, когда сходится экономика. Ты быстро считаешь, быстро проверяешь и не тратишь жизнь на красивые, но пустые истории. Деньги для тебя не самоцель, а честный измеритель пользы: если люди платят — значит, ценность настоящая.',
+    synergy: 'приземляет мечту в цифры и следит, чтобы вложенные силы возвращались измеримым результатом.',
+    power: 'Доводить дело до денег: видеть окупаемость, точки роста и реальную цену каждого решения.',
+    burnout: 'Имитация бурной деятельности, которая не даёт реального финансового результата.',
+    role: 'Коммерческий блок и финансовая эффективность',
+    tasks: [
+      'Финансовая модель направлений и контроль окупаемости',
+      'Продажи, партнёрские сделки и привлечение ресурсов',
+      'Оценка инвестиционных решений и масштабирование прибыльных гипотез'
+    ],
+    allies: [1, 8]
+  },
+  7: {
+    name: 'Интегратор (Коммуникатор)',
+    tagline: 'Нетворкинг, связи, объединение людей, комьюнити',
+    desc: 'Твой капитал — люди и связи между ними. Ты создаёшь пространство, в котором нужные люди находят друг друга, и часто именно твой один звонок решает задачу, над которой другие бились месяцами. Ты получаешь искреннее удовольствие от того, что созданный тобой союз начинает жить своей жизнью.',
+    synergy: 'открывает доступ к людям и ресурсам, ускоряя каждый шаг проекта в несколько раз.',
+    power: 'Соединять людей и ресурсы, открывая двери, которые для остальных закрыты.',
+    burnout: 'Изолированная одиночная работа без общения, драйва и обмена энергией.',
+    role: 'Партнёрства, комьюнити и внешние связи',
+    tasks: [
+      'Развитие сообщества и живых мероприятий экосистемы',
+      'Переговоры, партнёрства и поиск сильных союзников проекта',
+      'Соединение участников между собой в рабочие связки'
+    ],
+    allies: [3, 5]
+  },
+  8: {
+    name: 'Реформатор (Эколог)',
+    tagline: 'Высшая миссия, глобальные ценности, сохранение ресурсов',
+    desc: 'Ты сверяешь каждое действие с внутренней шкалой «правильно / неправильно». Тебе важно не просто победить, а победить не разрушив. Смысл и ценности для тебя — не украшение проекта, а его фундамент, и ты острее других чувствуешь момент, когда команда начинает торговать совестью ради быстрой выгоды.',
+    synergy: 'возвращает смысл в каждое решение и удерживает проект в согласии с его миссией на длинной дистанции.',
+    power: 'Держать миссию и ценности, не позволяя проекту потерять смысл ради быстрой выгоды.',
+    burnout: 'Деятельность, которая противоречит твоим внутренним ценностям и не несёт реальной пользы.',
+    role: 'Миссия, устойчивое развитие и репутация',
+    tasks: [
+      'Экологические и социальные инициативы экосистемы',
+      'Стандарты ответственности и внутренний ценностный аудит решений',
+      'Репутация проекта и коммуникация миссии вовне'
+    ],
+    allies: [6, 3]
+  }
+},
+
+/* ============================================================
+   16 ВОПРОСОВ
+   ============================================================ */
+questions: [
+  {
+    id: 1,
+    title: 'Представь. Прошло 10–12 лет. Ты стоишь вечером у окна, оглядываешься на пройденный путь и чувствуешь глубокое внутреннее спокойствие: «Да. Я прожил(а) эти годы не зря.» Что именно вызывает в тебе эту гордость?',
+    options: [
+      { text: 'Я создал(а) вещи и продукты, которых раньше не существовало, и они живут своей жизнью.', type: 1 },
+      { text: 'Я собрал(а) вокруг себя сильных людей и помог(ла) им совершить то, что казалось невозможным.', type: 2 },
+      { text: 'Я построил(а) прочный фундамент и систему, которая продолжает работать сквозь годы.', type: 3 },
+      { text: 'Я помог(ла) множеству людей поверить в себя, изменить свои судьбы и раскрыть свои таланты.', type: 4 },
+      { text: 'Я навёл(ла) порядок там, где раньше был хаос, сделав жизнь и работу тысяч людей понятной и спокойной.', type: 5 },
+      { text: 'Я построил(а) сильный, устойчивый бизнес, который обеспечивает достойную жизнь и даёт реальную ценность.', type: 6 },
+      { text: 'Я познакомил(а) и объединил(а) людей, которые создали вместе сильные проекты и крепкие семьи.', type: 7 },
+      { text: 'Я сделал(а) мир вокруг себя чище, безопаснее и гармоничнее для будущих поколений.', type: 8 }
+    ]
+  },
+  {
+    id: 2,
+    title: 'Представь. Ты ложишься спать после насыщенного дня, смотришь в потолок с улыбкой и понимаешь: «Сегодня я действительно жил(а). Время пролетело как одна секунда!» Что происходило в этот день?',
+    options: [
+      { text: 'Я весь день погружался(лась) в творческий поток, придумывая новые идеи, концепции и решения.', type: 1 },
+      { text: 'Мы вместе с командой преодолели сложнейший вызов и взяли новую вершину.', type: 2 },
+      { text: 'Мне удалось сложить сложную мозаику задач в единую ясную стратегию на годы вперёд.', type: 3 },
+      { text: 'Я видел(а), как у человека рядом загорелись глаза, когда он понял своё предназначение.', type: 4 },
+      { text: 'Я настроил(а) и отладил(а) процесс так, что сложный механизм заработал легко и без сбоев.', type: 5 },
+      { text: 'Я заключил(а) успешную сделку и увидел(а) реальный финансовый результат своей работы.', type: 6 },
+      { text: 'Я провёл(ла) день среди потрясающих людей, соединяя их интересы и создавая мощную синергию.', type: 7 },
+      { text: 'Я участвовал(а) в деле, которое реальными поступками сделало мир лучше и правильнее.', type: 8 }
+    ]
+  },
+  {
+    id: 3,
+    title: 'Представь. Тебе больше никогда в жизни не нужно работать ради денег. На твоём счету лежит сумма, которой с запасом хватит тебе и нескольким поколениям твоей семьи. Ты просыпаешься утром абсолютно свободным(ой). Чем ты начнёшь с искренним азартом заниматься каждый день?',
+    options: [
+      { text: 'Изобретать новые проекты, экспериментировать и воплощать самые нереальные задумки.', type: 1 },
+      { text: 'Собирать масштабные движения, вдохновлять людей и вести их к грандиозным целям.', type: 2 },
+      { text: 'Проектировать долгосрочные системы и институты, которые изменят будущее.', type: 3 },
+      { text: 'Обучать людей, проводить встречи, помогать каждому находить свой путь и силу.', type: 4 },
+      { text: 'Строить понятные, гармоничные процессы и создавать идеальные условия для работы других.', type: 5 },
+      { text: 'Инвестировать, запускать новые эффективные предприятия и масштабировать результаты.', type: 6 },
+      { text: 'Путешествовать, создавать международные сообщества и объединять лидеров из разных сфер.', type: 7 },
+      { text: 'Заниматься восстановлением природы, социальными проектами и защитой важных ценностей.', type: 8 }
+    ]
+  },
+  {
+    id: 4,
+    title: 'Представь. Прошло 12 лет. Твои дети уже взрослые и самостоятельные люди. Ты случайно слышишь, как они с гордостью рассказывают о тебе своим друзьям. Какую именно фразу тебе больше всего хотелось бы от них услышать?',
+    options: [
+      { text: '«Наш(а) папа/мама всегда умел(а) создавать нечто невероятное буквально из ничего!»', type: 1 },
+      { text: '«За ним(ней) всегда шли люди, потому что рядом с ним(ней) каждый чувствовал свою силу.»', type: 2 },
+      { text: '«Он(а) видел(а) будущее раньше остальных и умел(а) принимать мудрые решения.»', type: 3 },
+      { text: '«Он(а) помог(ла) огромному количеству людей найти себя и стать счастливыми.»', type: 4 },
+      { text: '«На него(неё) всегда можно было положиться — всё, к чему он(а) прикасался(лась), становилось надёжным.»', type: 5 },
+      { text: '«Он(а) доказал(а), что можно строить честный и очень успешный бизнес, помогая другим.»', type: 6 },
+      { text: '«Благодаря ему(ей) огромное количество людей нашли лучших друзей и партнёров по жизни.»', type: 7 },
+      { text: '«Он(а) оставил(а) после себя не просто слова, а реально чистый, здоровый и добрый мир.»', type: 8 }
+    ]
+  },
+  {
+    id: 5,
+    title: 'Представь. Ты сталкиваешься с ситуацией, которую ты больше не можешь спокойно наблюдать. Внутри закипает энергия, которая буквально заставляет тебя встать и начать действовать. Что это за ситуация?',
+    options: [
+      { text: 'Когда серость и рамки убивают талантливые идеи и не дают им появиться на свет.', type: 1 },
+      { text: 'Когда люди теряют веру в себя, опускают руки и соглашаются на меньшее.', type: 2 },
+      { text: 'Когда решения принимаются слепо и суетливо, без понимания последствий в будущем.', type: 3 },
+      { text: 'Когда человек проживает жизнь вполсилы, так и не узнав, на что он реально способен.', type: 4 },
+      { text: 'Когда из-за хаоса, глупых ошибок и отсутствия структуры теряются ресурсы и время.', type: 5 },
+      { text: 'Когда перспективное дело прогорает просто потому, что никто не умеет считать экономику.', type: 6 },
+      { text: 'Когда сильные и близкие по духу люди живут в изоляции и не могут найти друг друга.', type: 7 },
+      { text: 'Когда деятельность человека безответственно разрушает природу и здоровье людей.', type: 8 }
+    ]
+  },
+  {
+    /* Паттерн саботажа — как именно человек сам себя останавливает */
+    id: 6,
+    title: 'Вспомни ситуацию за последний год, когда ты был(а) близок(близка) к важному результату — но всё сорвалось в последний момент. Что стало для тебя главной причиной?',
+    options: [
+      { text: 'Я увлёкся(лась) новой идеей и бросил(а) предыдущее дело на полпути — старое уже не вдохновляло.', type: 1 },
+      { text: 'Я взял(а) на себя слишком много, не доверил(а) другим — и сгорел(а) / подавил(а) тех, кто рядом.', type: 2 },
+      { text: 'Я так долго просчитывал(а) все риски и варианты, что упустил(а) окно возможностей.', type: 3 },
+      { text: 'Я погрузился(лась) в проблемы и чувства других людей и забыл(а) про свой собственный результат.', type: 4 },
+      { text: 'Я застрял(а) в доведении деталей до идеала и так и не запустил(а) то, что уже работало.', type: 5 },
+      { text: 'Я увидел(а), что риск выше потенциальной выгоды, и предпочёл(ла) сохранить стабильность.', type: 6 },
+      { text: 'Я распылил(а) энергию на поддержание слишком многих связей и растерял(а) фокус на главном.', type: 7 },
+      { text: 'Я стал(а) слишком категоричным(ой) в своих принципах и оттолкнул(а) тех, кто мог бы помочь.', type: 8 }
+    ]
+  },
+  {
+    id: 7,
+    title: 'Представь. Ты запускаешь новый масштабный бизнес с абсолютного нуля. Вокруг полная неизвестность, готовых инструкций нет. С чего именно ты начнёшь строить это дело, на что обопрёшься в первую очередь?',
+    options: [
+      { text: 'С разработки уникального продукта или идеи, которой ещё нет на рынке.', type: 1 },
+      { text: 'С поиска и объединения сильной команды, готовой идти со мной до конца.', type: 2 },
+      { text: 'С глубокого анализа рынка, просчёта рисков и построения стратегии на годы вперёд.', type: 3 },
+      { text: 'С раскрытия способностей ключевых людей и создания атмосферы доверия.', type: 4 },
+      { text: 'С наведения порядка: пропишу первые правила, роли, процессы и регламенты.', type: 5 },
+      { text: 'С оценки финансовой модели, быстрой проверки окупаемости и поиска ресурсов.', type: 6 },
+      { text: 'С поднятия всех своих связей, нетворкинга и поиска сильных партнёров.', type: 7 },
+      { text: 'С формирования смыслового фундамента — ради чего мы это делаем и какую пользу несём.', type: 8 }
+    ]
+  },
+  {
+    id: 8,
+    title: 'Представь. Наступает момент, когда ты закрываешь важный этап в бизнесе, выдыхаешь и с искренним удовлетворением говоришь себе: «Да, я действительно успешен(на)!» Какое событие произошло?',
+    options: [
+      { text: 'Мой продукт или идея стали ярким трендом, который вдохновляет тысячи людей.', type: 1 },
+      { text: 'Моя команда достигла вершины, которую все вокруг считали абсолютно невозможной.', type: 2 },
+      { text: 'Прогноз и стратегия, которую я заложил(а) годы назад, сработали с абсолютной точностью.', type: 3 },
+      { text: 'Мои ученики и последователи превзошли меня и сами стали признанными мастерами.', type: 4 },
+      { text: 'Мой бизнес работает как швейцарские часы автономно, даже когда я уезжаю на месяцы.', type: 5 },
+      { text: 'Финансовые показатели и капитализация компании выросли в разы, подтвердив эффективность.', type: 6 },
+      { text: 'О нашем сообществе знают везде, а ключевые люди сферы стремятся попасть в наш круг.', type: 7 },
+      { text: 'Проект принёс ощутимую, реальную пользу природе и обществу, изменив стандарты к лучшему.', type: 8 }
+    ]
+  },
+  {
+    id: 9,
+    title: 'Представь. Ты создаёшь компанию своей мечты. Вы собираетесь всей командой в одном пространстве. Какая атмосфера там царит и как выглядит твоё взаимодействие с ними?',
+    options: [
+      { text: 'Атмосфера творческой лаборатории, где кипят идеи и нет страха ошибиться.', type: 1 },
+      { text: 'Атмосфера драйва и сплочённой армии, где каждый готов выложиться на 100% ради цели.', type: 2 },
+      { text: 'Атмосфера интеллектуального центра, где каждый знает свою роль в общей стратегии.', type: 3 },
+      { text: 'Атмосфера глубокого доверия, где искренне поддерживают и раскрывают каждого.', type: 4 },
+      { text: 'Атмосфера идеального порядка, чёткости и взаимного уважения к регламентам.', type: 5 },
+      { text: 'Атмосфера фокуса на результат, где каждый чётко видит связь своего труда и дохода.', type: 6 },
+      { text: 'Атмосфера живого общения, энергии, где постоянно рождаются новые союзы.', type: 7 },
+      { text: 'Атмосфера единого братства, вдохновлённого общей чистой миссией и смыслом.', type: 8 }
+    ]
+  },
+  {
+    id: 10,
+    title: 'Представь. В твоём бизнесе есть множество задач, но тебе нужно выбрать только одну ключевую сферу, которую ты заберёшь под свой абсолютный личный контроль, а остальное делегируешь. Что это за сфера?',
+    options: [
+      { text: 'Создание новых продуктов, смыслов, услуг и генерация свежих идей.', type: 1 },
+      { text: 'Общее лидерство, выстраивание командной культуры и принятие главных решений.', type: 2 },
+      { text: 'Долгосрочное стратегическое планирование и аналитика будущих трендов.', type: 3 },
+      { text: 'Обучение, передача опыта, адаптация и развитие человеческого потенциала.', type: 4 },
+      { text: 'Операционное управление, систематизация процессов и контроль качества.', type: 5 },
+      { text: 'Управление финансами, инвестиции, продажи и коммерческий рост.', type: 6 },
+      { text: 'Нетворкинг, привлечение ключевых партнёров и выстраивание альянсов.', type: 7 },
+      { text: 'Контроль экологичности, социальные инициативы и следование миссии.', type: 8 }
+    ]
+  },
+  {
+    /* Поведение под давлением — что человек делает, когда времени нет */
+    id: 11,
+    title: 'Завтра дедлайн по твоему важному проекту, а у тебя ничего не готово. Нет времени на иллюзии. Что ты реально делаешь этим вечером?',
+    options: [
+      { text: 'Нахожу нестандартный лайфхак или переделываю концепцию в последний момент — из ограничений рождается решение.', type: 1 },
+      { text: 'Собираю команду, беру ответственность на себя и мы работаем всю ночь — дедлайн неизбежен, но поражение — выбор.', type: 2 },
+      { text: 'Быстро считаю: что критично, что можно отложить, и делаю только то, что спасёт ситуацию.', type: 3 },
+      { text: 'Звоню тому, кто меня понимает, прошу поддержки или совета — через связь приходит сила.', type: 4 },
+      { text: 'Составляю чек-лист из оставшихся часов и иду по пунктам, не отвлекаясь на панику.', type: 5 },
+      { text: 'Ищу, какую часть проекта можно быстро монетизировать или продать уже сейчас, чтобы минимизировать убытки.', type: 6 },
+      { text: 'Обзваниваю знакомых — кто-то точно выручит ресурсом, связями или свежим взглядом.', type: 7 },
+      { text: 'Проверяю: не противоречит ли спасение проекта моим ценностям. Если да — лучше честный провал, чем компромисс.', type: 8 }
+    ]
+  },
+  {
+    id: 12,
+    title: 'Представь. Всё, что ты построил(а), рухнуло за одну ночь. Ты потерял(а) деньги, команду, репутацию. Ты сидишь в пустой комнате. Что ты сделаешь в ближайшие 24 часа?',
+    options: [
+      { text: 'Начну рисовать новую идею на чистом листе. Разрушение — это пространство для нового.', type: 1 },
+      { text: 'Соберу оставшихся. Позвоню тем, кто верит в меня, и мы начнём сначала.', type: 2 },
+      { text: 'Разберу, что именно рухнуло, найду корневую причину и спроектирую новую систему.', type: 3 },
+      { text: 'Позвоню близким. Сначала поддержу тех, кому хуже, чем мне — и через них восстановлюсь.', type: 4 },
+      { text: 'Составлю план восстановления: что осталось, что нужно, сроки, приоритеты.', type: 5 },
+      { text: 'Посчитаю, что сохранилось, и найду самый быстрый способ вернуть ресурс.', type: 6 },
+      { text: 'Найду своё сообщество. Вместе мы восстановимся быстрее, чем по одному.', type: 7 },
+      { text: 'Остановлюсь. Пойму, не была ли эта система изначально неэтичной, и начну заново с чистого смысла.', type: 8 }
+    ]
+  },
+  {
+    id: 13,
+    title: 'Представь. Ты смотришь на мир вокруг через призму своей жизни. Каким должен быть мир, который ты оставишь следующим поколениям, чтобы ты мог(ла) сказать, что исполнил(а) свой главный долг?',
+    options: [
+      { text: 'Мир, где каждый человек имеет свободу творить и реализовывать безумные идеи.', type: 1 },
+      { text: 'Мир сильных и смелых людей, способных объединяться и брать ответственность.', type: 2 },
+      { text: 'Мир, выстроенный разумно и гармонично, где решения принимаются мудро.', type: 3 },
+      { text: 'Мир, в котором люди слышат и поддерживают друг друга, развиваясь без страха.', type: 4 },
+      { text: 'Мир стабильности, безопасности и понятных правил, где нет разрушительного хаоса.', type: 5 },
+      { text: 'Мир процветания и честных возможностей, где любой труд приносит достойный плод.', type: 6 },
+      { text: 'Мир без границ и одиночества, где люди объединены в единое тёплое сообщество.', type: 7 },
+      { text: 'Чистый, цветущий и здоровый мир, живущий в полной гармонии с природой.', type: 8 }
+    ]
+  },
+  {
+    /* Жёсткий trade-off — чем человек готов заплатить. Один выбор. */
+    id: 14,
+    picks: 1,
+    title: 'Если бы для достижения твоей мечты тебе пришлось отказаться от одного из этого НАВСЕГДА, что отдать было бы для тебя легче всего?',
+    options: [
+      { text: 'Гарантированную стабильность и проверенные схемы — я готов(а) рисковать ради нового.', type: 1 },
+      { text: 'Личный комфорт и спокойные выходные — амбициозная цель важнее отдыха.', type: 2 },
+      { text: 'Право на импульсивные, эмоциональные решения — я предпочту холодный расчёт.', type: 3 },
+      { text: 'Возможность угождать всем и быть хорошим(ой) для всех — я готов(а) к непониманию ради результата.', type: 4 },
+      { text: 'Возможность делать всё по-своему, без контроля и проверок — я выбираю дисциплину.', type: 5 },
+      { text: 'Идеализм, который красиво звучит, но не приносит денег — я выбираю окупаемость.', type: 6 },
+      { text: 'Широкий, но поверхностный круг знакомств — я готов(а) сузить фокус ради глубины цели.', type: 7 },
+      { text: 'Быструю выгоду и лёгкие победы — я выбираю долгосрочную миссию, даже если путь длиннее.', type: 8 }
+    ]
+  },
+  {
+    id: 15,
+    title: 'Представь. Ты добился(лась) своей главной цели. Ты сидишь в тишине и понимаешь, что твоя жизнь изменилась навсегда. Что именно в этом новом состоянии радует тебя больше всего?',
+    options: [
+      { text: 'Я могу творить без ограничений и рамок, видя, как мои идеи меняют реальность.', type: 1 },
+      { text: 'Я чувствую свою власть над обстоятельствами и вижу, как команда растёт и достигает высот.', type: 2 },
+      { text: 'Я вижу, как безупречно работает система, которую я создал(а), и я полностью свободен(на).', type: 3 },
+      { text: 'Я знаю, что помог(ла) сотням людей изменить свои судьбы к лучшему.', type: 4 },
+      { text: 'Моя жизнь полна предсказуемого спокойствия, а все процессы работают как часы.', type: 5 },
+      { text: 'Я вижу конкретные цифры прибыли и понимаю, что мой труд окупился сторицей.', type: 6 },
+      { text: 'Вокруг меня собирается мощное сообщество единомышленников и партнёров.', type: 7 },
+      { text: 'Я знаю, что оставил(а) после себя чистый, правильный и справедливый мир.', type: 8 }
+    ]
+  },
+  {
+    /* Голос мечты — теневая сторона ведущего вектора. Один выбор. */
+    id: 16,
+    picks: 1,
+    title: 'Если бы твоя мечта могла говорить тебе правду о тебе прямо сейчас — без прикрас и мотивации, — что бы она сказала?',
+    options: [
+      { text: '«У тебя сотни идей, но ты боишься, что ни одна из них не стоит реализации.»', type: 1 },
+      { text: '«Ты ведёшь других, но внутри не уверен(а), что сам(а) идёшь в правильном направлении.»', type: 2 },
+      { text: '«Ты анализируешь слишком много и действуешь слишком мало — паралич разума.»', type: 3 },
+      { text: '«Ты отдаёшься людям до пустоты, но редко позволяешь себе быть настоящим(ой).»', type: 4 },
+      { text: '«Ты держишь всё на себе, потому что не веришь, что система сработает без твоего контроля.»', type: 5 },
+      { text: '«Ты гонишься за цифрами и уже не помнишь, зачем это начинал(а).»', type: 6 },
+      { text: '«Ты знаешь многих, но боишься, что ни одна из этих связей не настоящая.»', type: 7 },
+      { text: '«Ты борешься за правду, но чувствуешь, что мир не хочет её слышать.»', type: 8 }
+    ]
+  },
+  {
+    id: 17,
+    title: 'Представь. Ты поднялся(лась) на серьёзную высоту. Ты успешен(на), у тебя есть значительные ресурсы, устойчивое положение и влияние. Что именно ты видишь вокруг себя? Чего именно ты уже достиг(ла) из этих материальных и жизненных целей?',
+    options: [
+      { text: 'Я создал(а) масштабную инновационную компанию, которая задаёт тренды на рынке и работает автономно.', type: 1 },
+      { text: 'Я зарабатываю миллионы, моя команда стала эталоном в индустрии, а моё имя — синоним успеха.', type: 2 },
+      { text: 'У меня сформирован мощный портфель активов, а мои стратегические прогнозы определяют развитие рынка.', type: 3 },
+      { text: 'Я запустил(а) системный образовательный или благотворительный проект, который реально меняет судьбы тысяч людей.', type: 4 },
+      { text: 'Я создал(а) надёжный капитал и активы, которые полностью обеспечивают меня, моих детей и внуков.', type: 5 },
+      { text: 'Я выстроил(а) высокомаржинальный бизнес, продукты которого ежедневно покупают сотни тысяч людей.', type: 6 },
+      { text: 'Я объединил(а) самых сильных людей отрасли в закрытое, влиятельное и тёплое бизнес-сообщество.', type: 7 },
+      { text: 'Я реализовал(а) проекты, которые приносят реальную пользу обществу и защищают окружающую среду на системном уровне.', type: 8 }
+    ]
+  },
+  {
+    id: 18,
+    scored: false,
+    title: 'Как ты думаешь, сколько времени и личной энергии в день потребовалось бы человеку, чтобы воплотить мечту такого масштаба (выбранную тобой только что) в реальность?',
+    options: [
+      { text: '1–2 часа в день точечных, но системных действий без пропусков.', type: 1 },
+      { text: '2–4 часа в день глубокого погружения в ключевые процессы.', type: 2 },
+      { text: '5–6 часов в день отдачи — практически весь основной рабочий день.', type: 3 },
+      { text: '8+ часов в день — сделать это своим стилем жизни и полностью жить проектом.', type: 4 },
+      { text: 'Гибкий график — отдавать столько часов, сколько требует конкретный этап.', type: 5 },
+      { text: 'Время и энергия команды — инвестировать ресурс в сбор и управление людьми.', type: 6 },
+      { text: 'Пиковая концентрация — не часы отсидки, а максимальная точность в моменты решений.', type: 7 },
+      { text: 'Полный масштаб — график диктуется целью: отдавать абсолютно всё необходимое время.', type: 8 }
+    ]
+  },
+  {
+    id: 19,
+    scored: false,
+    title: 'А теперь — момент истины. Возвращаемся к тебе. Из того объёма времени и ресурсов, которые объективно требуются для воплощения в реальность твоей мечты, сколько времени и личной энергии ты реально готов(а) инвестировать каждый день, начиная прямо сегодня?',
+    options: [
+      { text: 'Я реально готов(а) инвестировать 1–2 часа в день, начиная прямо сегодня, и постепенно наращивать темп.', type: 1 },
+      { text: 'Я реально готов(а) выделять этот мощный блок в 2–4 часа каждый день ради реализации своей мечты.', type: 2 },
+      { text: 'Я реально готов(а) инвестировать 5–6 часов в день и сделать получение результата своим главным приоритетом.', type: 3 },
+      { text: 'Я реально готов(а) зайти в проект с головой на 8+ часов в день без раскачки и сомнений.', type: 4 },
+      { text: 'Я реально готов(а) включаться по максимуму на каждом ключевом этапе создания своей мечты.', type: 5 },
+      { text: 'Я реально готов(а) выстраивать команду, привлекать ресурсы и организовывать людей прямо с сегодняшнего дня.', type: 6 },
+      { text: 'Я реально готов(а) отдать максимум своей энергии, фокуса и точности действий на старте.', type: 7 },
+      { text: 'Я реально готов(а) отдавать всё необходимое время, потому что моя мечта этого стоит.', type: 8 }
+    ]
+  },
+  {
+    id: 20,
+    scored: false,
+    picks: 1,
+    title: 'Представь. У тебя есть дело, которое приносит стабильный и растущий доход. Какой уровень ежемесячного дохода позволит тебе чувствовать абсолютную защищённость и свободу?',
+    options: [
+      { text: '$3 000 – $5 000: полная закрытость базовых потребностей и спокойствие за быт.', type: 1 },
+      { text: '$10 000 – $25 000: высокий уровень личной свободы, путешествий и комфорта семьи.', type: 2 },
+      { text: '$50 000 – $100 000: масштабная финансовая независимость, инвестиции и свободный капитал.', type: 3 },
+      { text: '$250 000+: неограниченный ресурс для запуска крупных международных проектов и фондов.', type: 4 }
+    ]
+  }
+
+]
+
+};
+
+</script>
+<script>
+// ===== content-ua.js =====
+/* ============================================================================
+   ВІДКРИТТЯ ШЛЯХУ · Genesis Solar Life
+   content-ua.js — ВЕСЬ УКРАЇНСЬКИЙ ТЕКСТ застосунку.
+   ----------------------------------------------------------------------------
+   Структура файлу повністю повторює content-ru.js: те саме число питань,
+   той самий порядок варіантів, ті самі type. Інакше перемикання мови
+   зламається (перевіряється автоматично, помилки видно в консолі F12).
+
+   УВАГА: усередині рядків використовується типографський апостроф ’
+   (не прямий '), інакше рядок у коді розірветься.
+   ============================================================================ */
+
+window.CONTENT = window.CONTENT || {};
+
+window.CONTENT.ua = {
+
+/* ============================================================
+   ІНТЕРФЕЙС
+   ============================================================ */
+ui: {
+  code: 'ua',
+  label: 'UA',
+  labelFull: 'Українська',
+
+  brandTag:   'Genesis Solar Life · Project Edition',
+  brandTitle: 'ВІДКРИТТЯ ШЛЯХУ',
+  brandSub:   'Глибинна діагностика особистості та твого потенціалу',
+
+  intro: {
+    lead: 'Перед тобою <strong>20 питань</strong>. Це не іспит — тут немає правильних і неправильних відповідей. Є лише твоя правда про себе.',
+    note: 'Вимкни контролюючий розум. Не аналізуй і не прораховуй, «як буде краще виглядати». Відповідай за <strong>першим внутрішнім імпульсом</strong> — саме він знає про тебе більше, ніж усі твої пояснення. На кожне питання дається 88 секунд: цього достатньо для чесності й замало для гри в правильність.',
+    badges: ['◆ 20 питань', '◆ 88 секунд на питання', '◆ Пріоритети 1 · 2 · 3', '◆ 8 векторів особистості'],
+    nameLabel:       'Як тебе звати? (необов’язково — ім’я потрапить у звіт для наставника)',
+    namePlaceholder: 'Учасник',
+    start:  'Почати діагностику',
+    resume: '▸ Продовжити з питання {n} із {m}',
+    last:   '↺ Відкрити минулий результат',
+    legal:  'Усі дані залишаються в цьому браузері. Нікуди не надсилаються, ніким не збираються.'
+  },
+
+  quiz: {
+    counter:    'Питання {n} із {m}',
+    timerLabel: 'секунд',
+    picked:     'Позначено {n} із {m}',
+    next:       'Далі →',
+    finish:     'Ваш шлях відкрито'
+  },
+
+  toast: {
+    timeout:  'Довірся першому імпульсу! Обери варіанти, які найбільше відгукуються',
+    full:     'Усі пріоритети зайняті. Клікни по цифрі, щоб звільнити місце',
+    copied:   'Звіт скопійовано — встав його наставнику в Telegram або SMS',
+    copyFail: 'Скопіювати автоматично не вдалося. Виділи текст вручну',
+    changed:  'Питання змінилися з минулого разу — починаємо спочатку'
+  },
+
+  result: {
+    chip:      '✦ Ваш шлях відкрито',
+    dateLine:  '{name} · {date}',
+
+    block1:    '1 · Блок головних рішень',
+    dream:     'Чого я вже досяг(ла) — питання №{id}',
+    price:     '🎯 Об’єктивна ціна мрії — питання №{id}',
+    commit:    '⚡ Мій особистий момент істини — питання №{id}',
+    income:    '💰 Мій рівень свободи — питання №{id}',
+    gauge:     'Індекс готовності · {title}',
+    gaugeHint: 'Орієнтовно: ціна мрії ≈ {need} год/день, твій заявлений внесок ≈ {give} год/день.',
+
+    block2:      '2 · Психологічний профіль',
+    leadLabel:   'Провідний вектор',
+    subLabel:    'Доповнювальний вектор',
+    score:       '{s} із {m} балів · {p}%',
+    synergyWord: 'Синергія:',
+    synergyText: 'у зв’язці з провідним вектором «{lead}» він {text}',
+    mixedWord:   'Змішаний профіль:',
+    mixedText:   'два вектори набрали однаковий бал. Це означає, що ти однаково сильний(на) в обох — і обирати роль варто не за тестом, а за тим, яке завдання зараз потрібніше проєкту.',
+    histogram:   'Гістограма 8 векторів',
+    power:       '⚡ Суперсила',
+    burnout:     '🔥 Зона вигорання',
+
+    block3:    '5 · Реалізація в Genesis Solar Life',
+    direction: 'Твій напрям',
+    tasks:     'Сфери відповідальності та завдання',
+    allyTitle: '🤝 Ідеальна командна зв’язка',
+    allyText:  'Твій прямий партнер — людина з вектором <b>«{sub}»</b>: він {text}',
+    allyMore:  'Також підсилюють тебе: <b>{list}</b>.',
+
+    block4:  '8 · Паперова рефлексія — ручкою, без телефона',
+    copy:    'Скопіювати звіт наставнику',
+    print:   'Зберегти / Роздрукувати',
+    restart: '↺ Пройти заново',
+    legal:   'Сформовано автоматично · Genesis Solar Life · {date}'
+  },
+
+  readiness: [
+    { min: 90, title: 'Повний збіг',
+      note: 'Ти готовий(а) платити за мрію рівно ту ціну, яку сам(а) і назвав(ла). Це рідкість: зазвичай між «потрібно» і «готовий» лежить прірва. Завдання тепер одне — не знизити темп на другому тижні.' },
+    { min: 65, title: 'Невеликий розрив',
+      note: 'Ти майже дотягуєш до власної планки. Розрив закривається не героїзмом, а розкладом: знайди відсутній час у конкретній годині конкретного дня і захисти його від усього іншого.' },
+    { min: 40, title: 'Значний розрив',
+      note: 'Між ціною мрії та твоїм внеском — помітна дистанція. Це не вирок, але вибір: або збільшити внесок, або чесно зменшити масштаб. Найгірший варіант — залишити все як є і потім пояснювати собі, чому не вийшло.' },
+    { min: 0,  title: 'Критичний розрив',
+      note: 'Сьогодні твоя мрія і твій реальний внесок живуть у різних світах. Саме це усвідомлення вже корисніше за будь-який мотиваційний текст. Почни не з восьми годин, а з однієї чесної години на день — і втримай її 30 днів поспіль.' }
+  ],
+
+  reflect: [
+    'Яке одне завдання із зони твого провідного вектора «{lead}» ти береш на себе вже цього тижня? Сформулюй його одним реченням — так, щоб у п’ятницю можна було перевірити: зроблено чи ні.',
+    'Твій Індекс готовності — {readiness}%. Що конкретно ти прибереш зі свого дня, щоб звільнити відсутній час? Напиши, від чого саме відмовляєшся.',
+    'Випиши 3 справи, які ти робиш щодня і які НЕ наближають тебе до мрії. Познач ту, від якої відмовишся першою, і постав дату.',
+    'Хто з твого оточення має доповнювальний вектор «{sub}»? Напиши ім’я і те, що ти запропонуєш цій людині протягом найближчого тижня.',
+    'Твоя зона вигорання названа вище. За якою першою ознакою ти зрозумієш, що входиш у неї, і яку одну дію зробиш у цей момент?'
+  ],
+
+  report: {
+    title:     '📋 ВАШ ШЛЯХ ВІДКРИТО | Genesis Solar Life',
+    user:      'Користувач: {name}',
+    date:      'Дата: {date}',
+    s1:        '1. ЧОГО Я ВЖЕ ДОСЯГ(ЛА) (З Питання №{id}):',
+    p1:        '🥇 1 пріоритет: ',
+    p2:        '🥈 2 пріоритет: ',
+    p3:        '🥉 3 пріоритет: ',
+    s2:        '2. ЦІНА МРІЇ VS ОСОБИСТА ГОТОВНІСТЬ (З Питань №{a} і №{b}):',
+    need:      '🎯 Об’єктивно потрібно людині на день:',
+    give:      '⚡ Мій особистий внесок від сьогодні:',
+    income:    '💰 Бажаний рівень доходу:',
+    readiness: '📊 Індекс готовності: {v}% ({title})',
+    s3:        '3. ПСИХОЛОГІЧНИЙ ПРОФІЛЬ:',
+    leadLine:  '• Провідний вектор: {name} ({score} б.)',
+    subLine:   '• Доповнювальний вектор: {name} ({score} б.)',
+    powerLine: '• Моя Суперсила: {text}',
+    burnLine:  '• Ризик вигорання: {text}',
+    s4:        '4. МОЯ ІДЕАЛЬНА РОЛЬ У GENESIS SOLAR LIFE:',
+    roleLine:  '• Напрям: {role} — {tasks}.',
+    allyLine:  '• Ідеальна зв’язка: потрібен партнер із психотипом {name}.',
+    s5:        '5. СТАН НА ЗАРАЗ:',
+    s6:        '6. СТРЕС-ПРОФІЛЬ І ПАТЕРН САБОТАЖУ:',
+    s7:        '7. ЯК ПРОЯВЛЯЮСЯ В ПРОЄКТІ:',
+    s8:        '8. ПРАВИЛА БЕЗПЕКИ:',
+    footer:    'Готовність діяти підтверджено. Шлях відкрито.'
+  }
+},
+
+/* ============================================================================
+   РОЗШИРЕНИЙ ПСИХОЛОГІЧНИЙ ПРОФІЛЬ
+   ----------------------------------------------------------------------------
+   Збирається не з балів, а з конкретних відповідей на чотири тригерні
+   питання (їхні id задані в config.js → triggers). Ключ кожного блоку —
+   номер вектора обраного варіанта.
+   ============================================================================ */
+psych: {
+
+  ui: {
+    stateTitle:   '3 · Твій стан на зараз',
+    stateLead:    'Що сказала твоя мрія — і що за цим стоїть',
+    stressTitle:  '4 · Стрес-профіль і патерн саботажу',
+    stressStop:   'Як ти себе зупиняєш',
+    stressCope:   'Що ти вмикаєш під тиском',
+    stressRisk:   'Ризик цього стилю',
+    projectTitle: '6 · Як ти проявляєшся в проєкті',
+    projectRole:  'Роль у структурі',
+    projectDeleg: 'Делегування і відповідальність',
+    projectFric:  'Точки тертя',
+    projectPrice: 'Чим ти готовий(а) заплатити',
+    safetyTitle:  '7 · Правила безпеки — три кроки',
+    safetyAvoid:  '1 · Чого категорично не робити',
+    safetyMetric: '2 · Що контролювати щодня',
+    safetyDeleg:  '3 · Що віддати партнерам',
+    echoSame:     'Тінь б’є рівно у твій провідний вектор «{lead}». Це не збіг: сила і слабке місце в людини майже завжди ростуть з одного кореня. Працювати треба не над іншою якістю, а над дозуванням цієї.',
+    echoDiff:     'Тінь говорить голосом вектора «{shadow}», а веде тебе «{lead}». Це розрив: ти вимагаєш від себе того, що не є твоєю сильною стороною. Частина тривоги піде, щойно ти перестанеш міряти себе чужою лінійкою.',
+    disclaimer:   'Цей розділ — не діагноз. Це те, що ти сам(а) про себе сказав(ла) у питаннях {q}, прочитане вголос.'
+  },
+
+  shadow: {
+    1: { title: 'Страх знецінення задуму',
+         text: 'Ідей у тебе більше, ніж у будь-кого навколо, але кожна нова знецінює попередню раніше, ніж ти встигаєш її перевірити. Це не лінь і не «немає дисципліни» — це захист: незапущена ідея не може провалитися. Доки ти не дозволиш одній із них бути недосконалою і живою, решта залишиться в голові.' },
+    2: { title: 'Синдром самозванця в ролі ведучого',
+         text: 'Ззовні ти той, за ким ідуть. Усередині — людина, яка не впевнена, що сама знає дорогу. Цей розрив з’їдає більше сил, ніж сама робота. Впевненість ведучого — не про знання маршруту, а про готовність відповідати за поворот; це в тебе вже є.' },
+    3: { title: 'Параліч аналізу',
+         text: 'Ти тримаєш у голові більше варіантів, ніж здатний(на) перевірити, і кожен новий аналіз відсуває перший рух. Мислення стало прихистком: доки рішення не ухвалене, воно не може виявитися хибним. Потрібні не дані, а менший розмір кроку, який ти дозволиш собі зробити без повної картини.' },
+    4: { title: 'Вигорання того, хто допомагає',
+         text: 'Ти віддаєш людям стільки тепла, що на себе не лишається. І чим менше лишається, тим важче показати втому — від тебе чекають опори. Це не благородство, а борг, який колись пред’являть до сплати. Дозволити собі бути неідеальним(ою) для інших — твоє перше завдання, а не останнє.' },
+    5: { title: 'Гіперконтроль і фонова тривога',
+         text: 'Ти тримаєш усе на собі не з любові до влади, а тому що не віриш: без твого погляду розсиплеться. Часто цей досвід реальний — тебе вже підводили. Але ціна такої надійності — постійна напруга і стеля, вище якої одна людина фізично не підніме.' },
+    6: { title: 'Втрата сенсу за цифрами',
+         text: 'Показники ростуть, а всередині порожньо. Цифра стала єдиною зрозумілою відповіддю на питання «чи все правильно», бо сенс важче виміряти. Це криза не бізнесу, а відповіді на питання «навіщо», і грошима вона не закривається.' },
+    7: { title: 'Самотність серед людей',
+         text: 'Навколо тебе завжди люди, і при цьому ти не впевнений(а), що бодай один зв’язок витримає перевірку. Ти навчився(лася) бути потрібним(ою) і майже розучився(лася) бути просто собою поруч із кимось. Одна чесна розмова без користі для справи зараз важливіша за десять нових знайомств.' },
+    8: { title: 'Втома ідеаліста',
+         text: 'Ти довго тримаєш те, до чого більшості байдуже, і починаєш злитися на людей за глухоту. Звідси півкроку до цинізму — найнебезпечнішої для тебе точки: без віри в сенс ти втрачаєш пальне. Потрібні не однодумці взагалі, а одна-дві людини, які бачать те саме.' }
+  },
+
+  sabotage: {
+    1: { title: 'Втеча в новизну',
+         text: 'На фінішній прямій попередня справа перестає надихати — і ти йдеш у нову ідею, залишаючи позаду майже готове. Механізм простий: нове обіцяє, старе вимагає. Поруч із тобою обов’язково має бути той, хто доводить до кінця.' },
+    2: { title: 'Героїчне перевантаження',
+         text: 'Ти береш більше, ніж може винести одна людина, бо так швидше й надійніше. У підсумку вигораєш сам(а) і позбавляєш команду і права на помилку, і права на внесок.' },
+    3: { title: 'Втрачене вікно',
+         text: 'Ти рахуєш доти, доки рахувати вже нічого — можливість зачинилася. Обережність у твоєму випадку маскує страх незворотного кроку, а не брак інформації.' },
+    4: { title: 'Рятівництво',
+         text: 'Чужа біда для тебе завжди терміновіша за власне завдання. Ти закриваєш емоційні дірки оточення і приходиш до свого строку порожнім(ою).' },
+    5: { title: 'Перфекціоністський стопор',
+         text: 'Те, що вже працювало, ти не випустив(ла), бо «ще не ідеально». Доведення деталей — спосіб відкласти момент, коли роботу побачать і оцінять.' },
+    6: { title: 'Передчасна капітуляція',
+         text: 'Ти вийшов(ла), коли ризик став вищим за розрахункову вигоду. Іноді це зрілість, іноді — звичка захищати наявне ціною всього можливого.' },
+    7: { title: 'Розфокус на зв’язках',
+         text: 'Енергія пішла на підтримання стосунків, а головне лишилося без господаря. Ти був(ла) потрібен усім — і в підсумку нікому конкретно.' },
+    8: { title: 'Принципова ізоляція',
+         text: 'Ти не пішов(шла) на компроміс і залишився(лася) правим(ою) — але сам. Принципи коштують дорого, і рахунок нерідко оплачує саме той проєкт, заради якого ти їх захищав(ла).' }
+  },
+
+  pressure: {
+    1: { title: 'Креативний прорив',
+         text: 'Під тиском ти не панікуєш, а перевинаходиш: обмеження вмикають у тебе нестандартне мислення.',
+         risk: 'Рішення може бути блискучим, але невиконуваним чужими руками. Перевіряй його на відтворюваність без себе.' },
+    2: { title: 'Мобілізація',
+         text: 'Ти збираєш людей, береш відповідальність і йдеш до кінця — у кризі команда тримається на тобі.',
+         risk: 'Ти швидко витрачаєш чужий ресурс. Після авралів перевіряй, хто вигорів: тобі про це не скажуть.' },
+    3: { title: 'Тріаж',
+         text: 'Ти миттєво відділяєш критичне від другорядного і робиш лише те, що рятує ситуацію.',
+         risk: 'У поспіху відсікається те, що здавалося другорядним, а тримало конструкцію. Промовляй відсічене вголос.' },
+    4: { title: 'Опора на зв’язок',
+         text: 'Ти йдеш до людини — і через контакт повертаєш собі силу та ясність думки.',
+         risk: 'Якщо такої людини поруч не буде, криза вдарить удвічі сильніше. Домовся про такий контакт заздалегідь.' },
+    5: { title: 'Процедурний якір',
+         text: 'Ти переводиш паніку в список і йдеш за пунктами — структура тримає тебе краще за будь-яку мотивацію.',
+         risk: 'Список може завести в акуратне виконання хибного плану. Раз на годину підіймай голову і звіряй мету.' },
+    6: { title: 'Порятунок вартості',
+         text: 'Ти шукаєш, що можна зберегти, продати чи монетизувати просто зараз, щоб не втратити все.',
+         risk: 'Так рятують гроші і втрачають репутацію. Перевіряй, чи не продаєш майбутнє заради теперішнього.' },
+    7: { title: 'Мобілізація мережі',
+         text: 'Ти піднімаєш зв’язки, і допомога приходить звідти, звідки її ніхто не чекав.',
+         risk: 'Ресурс мережі скінченний. Рахуй, скільки разів ти просив(ла) і скільки разів давав(ла) сам(а).' },
+    8: { title: 'Етичний стоп-кран',
+         text: 'Ти перевіряєш порятунок на відповідність цінностям і готовий(а) прийняти чесну поразку.',
+         risk: 'Іноді це принциповість, а іноді — спосіб вийти з нестерпної напруги. Розрізняй ці два стани.' }
+  },
+
+  tradeoff: {
+    1: { title: 'Готовий(а) віддати стабільність',
+         text: 'Ти міняєш передбачуваність на можливість. Отже, тебе не можна ставити туди, де потрібна гарантія результату за будь-яку ціну: твоє місце — фронтир, тил прикриють інші.' },
+    2: { title: 'Готовий(а) віддати комфорт',
+         text: 'Ти жертвуєш відпочинком заради мети — сильний ресурс і водночас головний ризик. Відновлення тобі треба планувати так само жорстко, як завдання.' },
+    3: { title: 'Готовий(а) віддати імпульс',
+         text: 'Ти обираєш розрахунок замість емоції. Це робить тебе надійним(ою) у рішеннях і вразливим(ою) там, де треба надихнути, а не переконати.' },
+    4: { title: 'Готовий(а) віддати схвалення',
+         text: 'Ти приймаєш, що тебе не зрозуміють, — рідкісна зрілість. Стеж лише, щоб вона не перетворилася на глухоту до зворотного зв’язку.' },
+    5: { title: 'Готовий(а) віддати свободу дій',
+         text: 'Ти обираєш дисципліну і рамку. Це пришвидшує команду, але вимагає, щоб рамку задав той, кому ти справді довіряєш.' },
+    6: { title: 'Готовий(а) віддати ідеалізм',
+         text: 'Ти обираєш окупність замість красивих ідей. Сильна позиція — поки поруч є той, хто утримує сенс.' },
+    7: { title: 'Готовий(а) віддати широке коло',
+         text: 'Ти звужуєш охоплення заради глибини, а отже попереду період, коли стане тихіше. Виріши заздалегідь, кого залишаєш поруч.' },
+    8: { title: 'Готовий(а) віддати швидку вигоду',
+         text: 'Ти обираєш довгу дистанцію. Це твоя сила і твоя перевірка: довгі проєкти потребують проміжних перемог, інакше команда видихається.' }
+  },
+
+  role: {
+    1: { role: 'Візіонер продукту',
+         delegation: 'Виконання ти віддаєш легко, авторство — важко. Відпускай ідею в чужі руки раніше, ніж вона стане ідеальною.',
+         friction: 'Регламенти, звітність, повторювані операції та люди, яким треба пояснювати «навіщо» по третьому колу.' },
+    2: { role: 'Лідер-двигун напряму',
+         delegation: 'Ти делегуєш завдання, але не відповідальність, і забираєш її назад за першого збою. Вчися віддавати право на помилку.',
+         friction: 'Пасивність, нескінченні погодження та люди, які чекають інструкції замість рішення.' },
+    3: { role: 'Стратег-конструктор',
+         delegation: 'Ти довіряєш тим, хто мислить системно, і не довіряєш «на око». Проси не результат, а логіку рішення — так відпустиш спокійніше.',
+         friction: 'Поспіх, рішення без даних і вимога відповісти просто зараз.' },
+    4: { role: 'Наставник і зв’язка людей',
+         delegation: 'Завдання ти віддаєш легко, людей — важко: здається, що без тебе їх не почують. Це і є твоя зона росту.',
+         friction: 'Жорстка конкуренція всередині команди, знецінення почуттів, ставлення до людей як до ресурсу.' },
+    5: { role: 'Системний операційник',
+         delegation: 'Ти тягнеш на собі, бо впевнений(а): зроблять гірше. Віддавай не завдання, а стандарт — тоді якість перестане залежати від тебе.',
+         friction: 'Імпровізація без попередження, зрив домовленостей, «потім розберемося».' },
+    6: { role: 'Тримач комерційного контуру',
+         delegation: 'Ти віддаєш усе, що не впливає на гроші, і тримаєш усе, що впливає. Ризик — не помітити, як разом із делегованим пішов сенс.',
+         friction: 'Довгі розмови без цифр, проєкти «заради ідеї», розмита відповідальність за результат.' },
+    7: { role: 'Архітектор зв’язків',
+         delegation: 'Ти охоче підключаєш людей і погано доводиш почате сам(а). Поруч потрібен той, хто закриває хвости.',
+         friction: 'Ізоляція, робота без зворотного зв’язку, закриті команди і формальне спілкування.' },
+    8: { role: 'Хранитель місії та стандартів',
+         delegation: 'Ти віддаси що завгодно, крім права оцінювати рішення по совісті. Так і домовляйся: не контроль над усім, а право вето за цінностями.',
+         friction: 'Компроміси заради швидкості, «всі так роблять», цинізм і подвійні стандарти.' }
+  },
+
+  safety: {
+    1: { avoid:    'Не бери довгих операційних зобов’язань і не обіцяй строків за рутиною — зірвеш і втратиш довіру.',
+         metric:   'Дні поспіль на одному завданні без перемикання на нову ідею. Рахуй серію, як спортсмен.',
+         delegate: 'Доведення до результату, регламенти і все, що треба повторювати однаково.' },
+    2: { avoid:    'Не забирай завдання назад за першого збою виконавця — так гарантовано виростиш пасивну команду.',
+         metric:   'Скільки рішень за день ухвалили без тебе. Росте — ти справляєшся.',
+         delegate: 'Деталі, якість виконання і все, що вимагає терпіння до дрібниць.' },
+    3: { avoid:    'Не відкладай запуск до повної ясності — «ще трохи даних» у твоєму випадку триває нескінченно.',
+         metric:   'Години від ухваленого рішення до першої дії. Тримай менше доби.',
+         delegate: 'Швидкі операційні рішення і спілкування з людьми в моменті.' },
+    4: { avoid:    'Не бери роль, де треба регулярно ухвалювати непопулярні рішення про людей, — вона тебе зруйнує.',
+         metric:   'Скільки годин за день пішло на чужі завдання замість твого. Більше половини — тривожний знак.',
+         delegate: 'Жорсткі перемовини, відмови і контроль дисципліни.' },
+    5: { avoid:    'Не заходь у проєкт на стадії хаосу без повноважень — відповідатимеш за те, чим не керуєш.',
+         metric:   'Кількість ручних втручань за день. Падає — система запрацювала.',
+         delegate: 'Генерацію ідей, публічну комунікацію і перші неперевірені гіпотези.' },
+    6: { avoid:    'Не погоджуйся бути надихачем команди — вигориш, зображаючи ентузіазм, якого не відчуваєш.',
+         metric:   'Відношення витрачених годин до грошей, які вони принесли. Рахуй раз на тиждень.',
+         delegate: 'Смислову рамку проєкту і роботу з мотивацією людей.' },
+    7: { avoid:    'Не бери завдань, які треба робити самому і довго, — видихнешся до середини.',
+         metric:   'Скільки справ сьогодні доведено до кінця, а не почато. Рахуй завершення, не контакти.',
+         delegate: 'Фінальне виконання, документи і все, що вимагає тиші та посидючості.' },
+    8: { avoid:    'Не бери участі в тому, що суперечить твоїм цінностям, навіть тимчасово і «заради спільної справи» — ціна завжди вища за розрахункову.',
+         metric:   'Збіг сьогоднішніх дій із тим, заради чого ти в проєкті. Одна чесна оцінка ввечері.',
+         delegate: 'Комерційні перемовини і рішення, де потрібен холодний розрахунок без оцінки по совісті.' }
+  }
+},
+
+/* ============================================================
+   8 ВЕКТОРІВ
+   ============================================================ */
+types: {
+  1: {
+    name: 'Інноватор (Творець)',
+    tagline: 'Креатив, продукти, унікальні ідеї, нестандартні концепції',
+    desc: 'Ти мислиш можливостями там, де інші бачать обмеження. Твій розум постійно перезбирає реальність: ти помічаєш порожні ніші, відсутні деталі та очевидні для тебе рішення, до яких чомусь ніхто не додумався. Тобі тісно в готових рамках — ти приходиш не повторювати, а створювати те, чого ще не було.',
+    synergy: 'приносить свіжий погляд і нестандартний хід там, де звична логіка впирається в стіну — з ним у проєкту з’являється те, чого немає в конкурентів.',
+    power: 'Народжувати робочі ідеї з порожнечі й перетворювати невиразний внутрішній імпульс на конкретний продукт.',
+    burnout: 'Одноманітність, жорсткі рамки, нудна рутина і заборона на ініціативу. Коли від тебе вимагають механічно повторювати одне й те саме — ти згасаєш за лічені тижні.',
+    role: 'Продуктове ядро і R&D',
+    tasks: [
+      'Розробка нових продуктів, послуг і форматів екосистеми',
+      'Упаковка сенсів: назви, концепції, візуальна мова проєкту',
+      'Швидкі прототипи та пілотні експерименти перед масштабуванням'
+    ],
+    allies: [3, 5]
+  },
+  2: {
+    name: 'Домінатор (Лідер)',
+    tagline: 'Масштаб, вплив, управління, мотивація мас',
+    desc: 'Ти береш відповідальність раніше, ніж тебе про це попросять. Люди відчувають у тобі опору і йдуть за тобою, бо поруч із тобою в них з’являється сміливість, якої не було наодинці із собою. Масштаб — твоє природне середовище: дрібні цілі тебе не будять, а великі вмикають на повну.',
+    synergy: 'додає волю до масштабу і здатність вести людей — з ним задум перестає бути особистою справою і стає рухом.',
+    power: 'Вести людей до результату, піднімати планку й утримувати енергію команди на підйомі навіть у важкий період.',
+    burnout: 'Безвілля навколо, відсутність амбітних цілей і неможливість впливати на рішення. Ти згасаєш там, де від тебе чекають слухняності замість сили.',
+    role: 'Лідерство напрямів і збірка команд',
+    tasks: [
+      'Формування команд і постановка амбітних цілей напряму',
+      'Мотивація, утримання темпу та командної культури',
+      'Ухвалення ключових рішень і захист інтересів проєкту назовні'
+    ],
+    allies: [4, 5]
+  },
+  3: {
+    name: 'Архітектор (Стратег)',
+    tagline: 'Аналітика, бачення майбутнього, проєктування систем',
+    desc: 'Ти бачиш конструкцію раніше, ніж стіни. Твоя сила — прораховувати наслідки на роки вперед, поєднувати розрізнені факти в цілісну картину і ухвалювати рішення не за емоцією, а за логікою майбутнього. Твої рішення здаються оточенню надто повільними рівно до того моменту, коли час підтверджує твою правоту.',
+    synergy: 'приносить холодний розрахунок і довгу дистанцію — з ним рішення перестають бути ставкою і стають планом.',
+    power: 'Перетворювати хаос даних на чітку стратегію і бачити розвилки задовго до того, як у них упруться інші.',
+    burnout: 'Хаотичні метання без розуміння кінцевої мети, рішення «на бігу» і відсутність горизонту планування.',
+    role: 'Стратегія, аналітика та проєктування систем',
+    tasks: [
+      'Дорожні карти напрямів і моделі зростання екосистеми',
+      'Оцінка ризиків, пріоритизація завдань і розподіл ресурсів',
+      'Проєктування внутрішньої архітектури проєкту на роки вперед'
+    ],
+    allies: [1, 7]
+  },
+  4: {
+    name: 'Емпат (Наставник)',
+    tagline: 'Розкриття потенціалу людей, навчання, емоційний клімат',
+    desc: 'Ти чуєш людину раніше, ніж вона вимовить слово. Твій головний інтерес — не завдання, а той, хто його робить. Ти вмієш повертати людям віру в себе, і саме через людей приходить твій власний результат. Там, де ти з’являєшся, людина перестає боятися бути собою.',
+    synergy: 'додає людське тепло й утримує людей поруч тоді, коли стає по-справжньому важко.',
+    power: 'Розкривати потенціал і створювати середовище, у якому людина стає сильнішою, ніж була до зустрічі з тобою.',
+    burnout: 'Холодне ставлення до людей, байдужість і сприйняття співробітників як гвинтиків механізму.',
+    role: 'Наставництво, навчання і клімат команди',
+    tasks: [
+      'Супровід та адаптація нових учасників проєкту',
+      'Навчальні програми, розбори і передача досвіду',
+      'Діагностика вигорання й утримання здорового клімату в командах'
+    ],
+    allies: [2, 5]
+  },
+  5: {
+    name: 'Систематизатор (Організатор)',
+    tagline: 'Порядок, алгоритми, регламенти, оптимізація',
+    desc: 'Ти не терпиш безлад — і не через педантизм, а тому що бачиш, скільки сил і грошей він з’їдає. Там, де з’являєшся ти, виникають правила, ролі та зрозуміла послідовність дій. Ти робиш складне повторюваним, а разовий успіх — керованим процесом.',
+    synergy: 'закріплює результат: перетворює спалах на процес і не дає системі розсипатися на наступному витку зростання.',
+    power: 'Перетворювати разовий успіх на стабільний процес, який працює і без твоєї постійної присутності.',
+    burnout: 'Вічний безлад, невиконані обіцянки й відсутність базової структури навколо.',
+    role: 'Операційне управління та процеси',
+    tasks: [
+      'Регламенти, інструкції та стандарти роботи напрямів',
+      'Контроль якості, строків і виконавської дисципліни',
+      'Оптимізація процесів та усунення втрат ресурсів'
+    ],
+    allies: [1, 2]
+  },
+  6: {
+    name: 'Прагматик (Підприємець)',
+    tagline: 'Капітал, окупність, фінансова ефективність',
+    desc: 'Для тебе ідея стає реальною лише тоді, коли сходиться економіка. Ти швидко рахуєш, швидко перевіряєш і не витрачаєш життя на красиві, але порожні історії. Гроші для тебе не самоціль, а чесний вимірювач користі: якщо люди платять — отже, цінність справжня.',
+    synergy: 'приземлює мрію в цифри і стежить, щоб вкладені сили поверталися вимірюваним результатом.',
+    power: 'Доводити справу до грошей: бачити окупність, точки зростання і реальну ціну кожного рішення.',
+    burnout: 'Імітація бурхливої діяльності, яка не дає реального фінансового результату.',
+    role: 'Комерційний блок і фінансова ефективність',
+    tasks: [
+      'Фінансова модель напрямів і контроль окупності',
+      'Продажі, партнерські угоди та залучення ресурсів',
+      'Оцінка інвестиційних рішень і масштабування прибуткових гіпотез'
+    ],
+    allies: [1, 8]
+  },
+  7: {
+    name: 'Інтегратор (Комунікатор)',
+    tagline: 'Нетворкінг, зв’язки, об’єднання людей, спільнота',
+    desc: 'Твій капітал — люди і зв’язки між ними. Ти створюєш простір, у якому потрібні люди знаходять одне одного, і часто саме твій один дзвінок вирішує задачу, над якою інші билися місяцями. Ти отримуєш щире задоволення від того, що створений тобою союз починає жити своїм життям.',
+    synergy: 'відкриває доступ до людей і ресурсів, прискорюючи кожен крок проєкту в кілька разів.',
+    power: 'Поєднувати людей і ресурси, відчиняючи двері, які для інших зачинені.',
+    burnout: 'Ізольована самотня робота без спілкування, драйву й обміну енергією.',
+    role: 'Партнерства, спільнота і зовнішні зв’язки',
+    tasks: [
+      'Розвиток спільноти та живих заходів екосистеми',
+      'Перемовини, партнерства і пошук сильних союзників проєкту',
+      'Поєднання учасників між собою в робочі зв’язки'
+    ],
+    allies: [3, 5]
+  },
+  8: {
+    name: 'Реформатор (Еколог)',
+    tagline: 'Вища місія, глобальні цінності, збереження ресурсів',
+    desc: 'Ти звіряєш кожну дію з внутрішньою шкалою «правильно / неправильно». Тобі важливо не просто перемогти, а перемогти не зруйнувавши. Сенс і цінності для тебе — не прикраса проєкту, а його фундамент, і ти гостріше за інших відчуваєш момент, коли команда починає торгувати совістю заради швидкої вигоди.',
+    synergy: 'повертає сенс у кожне рішення й утримує проєкт у злагоді з його місією на довгій дистанції.',
+    power: 'Тримати місію і цінності, не дозволяючи проєкту втратити сенс заради швидкої вигоди.',
+    burnout: 'Діяльність, яка суперечить твоїм внутрішнім цінностям і не несе реальної користі.',
+    role: 'Місія, сталий розвиток і репутація',
+    tasks: [
+      'Екологічні та соціальні ініціативи екосистеми',
+      'Стандарти відповідальності та внутрішній ціннісний аудит рішень',
+      'Репутація проєкту і комунікація місії назовні'
+    ],
+    allies: [6, 3]
+  }
+},
+
+/* ============================================================
+   16 ПИТАНЬ
+   ============================================================ */
+questions: [
+  {
+    id: 1,
+    title: 'Уяви. Минуло 10–12 років. Ти стоїш увечері біля вікна, озираєшся на пройдений шлях і відчуваєш глибокий внутрішній спокій: «Так. Я прожив(ла) ці роки не дарма.» Що саме викликає в тобі цю гордість?',
+    options: [
+      { text: 'Я створив(ла) речі та продукти, яких раніше не існувало, і вони живуть своїм життям.', type: 1 },
+      { text: 'Я зібрав(ла) навколо себе сильних людей і допоміг(ла) їм здійснити те, що здавалося неможливим.', type: 2 },
+      { text: 'Я побудував(ла) міцний фундамент і систему, яка продовжує працювати крізь роки.', type: 3 },
+      { text: 'Я допоміг(ла) багатьом людям повірити в себе, змінити свої долі та розкрити свої таланти.', type: 4 },
+      { text: 'Я навів(ла) лад там, де раніше був хаос, зробивши життя і роботу тисяч людей зрозумілою і спокійною.', type: 5 },
+      { text: 'Я побудував(ла) сильний, стійкий бізнес, який забезпечує гідне життя і дає реальну цінність.', type: 6 },
+      { text: 'Я познайомив(ла) і об’єднав(ла) людей, які створили разом сильні проєкти і міцні сім’ї.', type: 7 },
+      { text: 'Я зробив(ла) світ навколо себе чистішим, безпечнішим і гармонійнішим для майбутніх поколінь.', type: 8 }
+    ]
+  },
+  {
+    id: 2,
+    title: 'Уяви. Ти лягаєш спати після насиченого дня, дивишся в стелю з усмішкою і розумієш: «Сьогодні я дійсно жив(ла). Час пролетів як одна секунда!» Що відбувалося цього дня?',
+    options: [
+      { text: 'Я весь день занурювався(лася) у творчий потік, придумуючи нові ідеї, концепції та рішення.', type: 1 },
+      { text: 'Ми разом із командою подолали надскладний виклик і взяли нову вершину.', type: 2 },
+      { text: 'Мені вдалося скласти складну мозаїку завдань у єдину чітку стратегію на роки вперед.', type: 3 },
+      { text: 'Я бачив(ла), як у людини поруч загорілися очі, коли вона зрозуміла своє призначення.', type: 4 },
+      { text: 'Я налаштував(ла) і відлагодив(ла) процес так, що складний механізм запрацював легко і без збоїв.', type: 5 },
+      { text: 'Я уклав(ла) успішну угоду і побачив(ла) реальний фінансовий результат своєї роботи.', type: 6 },
+      { text: 'Я провів(ла) день серед приголомшливих людей, поєднуючи їхні інтереси і створюючи потужну синергію.', type: 7 },
+      { text: 'Я брав(ла) участь у справі, яка реальними вчинками зробила світ кращим і правильнішим.', type: 8 }
+    ]
+  },
+  {
+    id: 3,
+    title: 'Уяви. Тобі більше ніколи в житті не потрібно працювати заради грошей. На твоєму рахунку лежить сума, якої із запасом вистачить тобі і кільком поколінням твоєї родини. Ти прокидаєшся вранці абсолютно вільним(ою). Чим ти почнеш зі щирим азартом займатися щодня?',
+    options: [
+      { text: 'Винаходити нові проєкти, експериментувати і втілювати найнереальніші задуми.', type: 1 },
+      { text: 'Збирати масштабні рухи, надихати людей і вести їх до грандіозних цілей.', type: 2 },
+      { text: 'Проєктувати довгострокові системи та інститути, які змінять майбутнє.', type: 3 },
+      { text: 'Навчати людей, проводити зустрічі, допомагати кожному знаходити свій шлях і силу.', type: 4 },
+      { text: 'Будувати зрозумілі, гармонійні процеси і створювати ідеальні умови для роботи інших.', type: 5 },
+      { text: 'Інвестувати, запускати нові ефективні підприємства і масштабувати результати.', type: 6 },
+      { text: 'Подорожувати, створювати міжнародні спільноти та об’єднувати лідерів із різних сфер.', type: 7 },
+      { text: 'Займатися відновленням природи, соціальними проєктами та захистом важливих цінностей.', type: 8 }
+    ]
+  },
+  {
+    id: 4,
+    title: 'Уяви. Минуло 12 років. Твої діти вже дорослі й самостійні люди. Ти випадково чуєш, як вони з гордістю розповідають про тебе своїм друзям. Яку саме фразу тобі найбільше хотілося б від них почути?',
+    options: [
+      { text: '«Наш(а) тато/мама завжди вмів(ла) створювати щось неймовірне буквально з нічого!»', type: 1 },
+      { text: '«За ним(нею) завжди йшли люди, бо поруч із ним(нею) кожен відчував свою силу.»', type: 2 },
+      { text: '«Він(а) бачив(ла) майбутнє раніше за інших і вмів(ла) приймати мудрі рішення.»', type: 3 },
+      { text: '«Він(а) допоміг(ла) величезній кількості людей знайти себе і стати щасливими.»', type: 4 },
+      { text: '«На нього(неї) завжди можна було покластися — все, до чого він(а) торкався(лася), ставало надійним.»', type: 5 },
+      { text: '«Він(а) довів(ла), що можна будувати чесний і дуже успішний бізнес, допомагаючи іншим.»', type: 6 },
+      { text: '«Завдяки йому(їй) величезна кількість людей знайшли найкращих друзів і партнерів по життю.»', type: 7 },
+      { text: '«Він(а) залишив(ла) після себе не просто слова, а реально чистий, здоровий і добрий світ.»', type: 8 }
+    ]
+  },
+  {
+    id: 5,
+    title: 'Уяви. Ти стикаєшся із ситуацією, за якою ти більше не можеш спокійно спостерігати. Всередині закипає енергія, яка буквально змушує тебе підвестися і почати діяти. Що це за ситуація?',
+    options: [
+      { text: 'Коли сірість і рамки вбивають талановиті ідеї та не дають їм з’явитися на світ.', type: 1 },
+      { text: 'Коли люди втрачають віру в себе, опускають руки і погоджуються на менше.', type: 2 },
+      { text: 'Коли рішення ухвалюються наосліп і метушливо, без розуміння наслідків у майбутньому.', type: 3 },
+      { text: 'Коли людина проживає життя впівсили, так і не дізнавшись, на що вона реально здатна.', type: 4 },
+      { text: 'Коли через хаос, дурні помилки та відсутність структури втрачаються ресурси і час.', type: 5 },
+      { text: 'Коли перспективна справа прогорає просто тому, що ніхто не вміє рахувати економіку.', type: 6 },
+      { text: 'Коли сильні та близькі за духом люди живуть в ізоляції й не можуть знайти одне одного.', type: 7 },
+      { text: 'Коли діяльність людини безвідповідально руйнує природу і здоров’я людей.', type: 8 }
+    ]
+  },
+  {
+    /* Патерн саботажу */
+    id: 6,
+    title: 'Пригадай ситуацію за останній рік, коли ти був(ла) близький(близька) до важливого результату — але все зірвалося в останній момент. Що стало для тебе головною причиною?',
+    options: [
+      { text: 'Я захопився(лася) новою ідеєю і кинув(ла) попередню справу на півдорозі — старе вже не надихало.', type: 1 },
+      { text: 'Я взяв(ла) на себе занадто багато, не довірив(ла) іншим — і згорів(ла) / пригнітив(ла) тих, хто поруч.', type: 2 },
+      { text: 'Я так довго прораховував(ла) всі ризики й варіанти, що упустив(ла) вікно можливостей.', type: 3 },
+      { text: 'Я занурився(лася) в проблеми й почуття інших людей і забув(ла) про власний результат.', type: 4 },
+      { text: 'Я застряг(ла) в доведенні деталей до ідеалу і так і не запустив(ла) те, що вже працювало.', type: 5 },
+      { text: 'Я побачив(ла), що ризик вищий за потенційну вигоду, і волів(ла) зберегти стабільність.', type: 6 },
+      { text: 'Я розпорошив(ла) енергію на підтримання занадто багатьох зв’язків і розгубив(ла) фокус на головному.', type: 7 },
+      { text: 'Я став(ла) занадто категоричним(ою) у своїх принципах і відштовхнув(ла) тих, хто міг би допомогти.', type: 8 }
+    ]
+  },
+  {
+    id: 7,
+    title: 'Уяви. Ти запускаєш новий масштабний бізнес з абсолютного нуля. Навколо повна невідомість, готових інструкцій немає. З чого саме ти почнеш будувати цю справу, на що обіпрешся в першу чергу?',
+    options: [
+      { text: 'З розробки унікального продукту або ідеї, якої ще немає на ринку.', type: 1 },
+      { text: 'З пошуку та об’єднання сильної команди, готової йти зі мною до кінця.', type: 2 },
+      { text: 'З глибокого аналізу ринку, прорахунку ризиків і побудови стратегії на роки вперед.', type: 3 },
+      { text: 'З розкриття здібностей ключових людей і створення атмосфери довіри.', type: 4 },
+      { text: 'З наведення ладу: пропишу перші правила, ролі, процеси та регламенти.', type: 5 },
+      { text: 'З оцінки фінансової моделі, швидкої перевірки окупності та пошуку ресурсів.', type: 6 },
+      { text: 'З підняття всіх своїх зв’язків, нетворкінгу та пошуку сильних партнерів.', type: 7 },
+      { text: 'З формування смислового фундаменту — заради чого ми це робимо і яку користь несемо.', type: 8 }
+    ]
+  },
+  {
+    id: 8,
+    title: 'Уяви. Настає момент, коли ти закриваєш важливий етап у бізнесі, видихаєш і зі щирим задоволенням кажеш собі: «Так, я справді успішний(на)!» Яка подія відбулася?',
+    options: [
+      { text: 'Мій продукт або ідея стали яскравим трендом, який надихає тисячі людей.', type: 1 },
+      { text: 'Моя команда досягла вершини, яку всі навколо вважали абсолютно неможливою.', type: 2 },
+      { text: 'Прогноз і стратегія, яку я заклав(ла) роки тому, спрацювали з абсолютною точністю.', type: 3 },
+      { text: 'Мої учні та послідовники перевершили мене і самі стали визнаними майстрами.', type: 4 },
+      { text: 'Мій бізнес працює як швейцарський годинник автономно, навіть коли я їду на місяці.', type: 5 },
+      { text: 'Фінансові показники та капіталізація компанії виросли в рази, підтвердивши ефективність.', type: 6 },
+      { text: 'Про нашу спільноту знають скрізь, а ключові люди сфери прагнуть потрапити в наше коло.', type: 7 },
+      { text: 'Проєкт приніс відчутну, реальну користь природі та суспільству, змінивши стандарти на краще.', type: 8 }
+    ]
+  },
+  {
+    id: 9,
+    title: 'Уяви. Ти створюєш компанію своєї мрії. Ви збираєтеся всією командою в одному просторі. Яка атмосфера там панує і як виглядає твоя взаємодія з ними?',
+    options: [
+      { text: 'Атмосфера творчої лабораторії, де вирують ідеї й немає страху помилитися.', type: 1 },
+      { text: 'Атмосфера драйву і згуртованої армії, де кожен готовий викластися на 100% заради мети.', type: 2 },
+      { text: 'Атмосфера інтелектуального центру, де кожен знає свою роль у загальній стратегії.', type: 3 },
+      { text: 'Атмосфера глибокої довіри, де щиро підтримують і розкривають кожного.', type: 4 },
+      { text: 'Атмосфера ідеального порядку, чіткості та взаємної поваги до регламентів.', type: 5 },
+      { text: 'Атмосфера фокусу на результат, де кожен чітко бачить зв’язок своєї праці та доходу.', type: 6 },
+      { text: 'Атмосфера живого спілкування, енергії, де постійно народжуються нові союзи.', type: 7 },
+      { text: 'Атмосфера єдиного братерства, натхненного спільною чистою місією та сенсом.', type: 8 }
+    ]
+  },
+  {
+    id: 10,
+    title: 'Уяви. У твоєму бізнесі є безліч завдань, але тобі потрібно обрати тільки одну ключову сферу, яку ти забереш під свій абсолютний особистий контроль, а решту делегуєш. Що це за сфера?',
+    options: [
+      { text: 'Створення нових продуктів, сенсів, послуг і генерація свіжих ідей.', type: 1 },
+      { text: 'Загальне лідерство, вибудовування командної культури та ухвалення головних рішень.', type: 2 },
+      { text: 'Довгострокове стратегічне планування та аналітика майбутніх трендів.', type: 3 },
+      { text: 'Навчання, передача досвіду, адаптація та розвиток людського потенціалу.', type: 4 },
+      { text: 'Операційне управління, систематизація процесів і контроль якості.', type: 5 },
+      { text: 'Управління фінансами, інвестиції, продажі та комерційний ріст.', type: 6 },
+      { text: 'Нетворкінг, залучення ключових партнерів і вибудовування альянсів.', type: 7 },
+      { text: 'Контроль екологічності, соціальні ініціативи та слідування місії.', type: 8 }
+    ]
+  },
+  {
+    /* Поведінка під тиском */
+    id: 11,
+    title: 'Завтра дедлайн за твоїм важливим проєктом, а в тебе нічого не готово. Немає часу на ілюзії. Що ти реально робиш цим вечором?',
+    options: [
+      { text: 'Знаходжу нестандартний лайфхак або переробляю концепцію в останній момент — із обмежень народжується рішення.', type: 1 },
+      { text: 'Збираю команду, беру відповідальність на себе і ми працюємо всю ніч — дедлайн неминучий, але поразка — вибір.', type: 2 },
+      { text: 'Швидко рахую: що критично, що можна відкласти, і роблю лише те, що врятує ситуацію.', type: 3 },
+      { text: 'Телефоную тому, хто мене розуміє, прошу підтримки чи поради — через зв’язок приходить сила.', type: 4 },
+      { text: 'Складаю чек-лист із залишкових годин і йду за пунктами, не відволікаючись на паніку.', type: 5 },
+      { text: 'Шукаю, яку частину проєкту можна швидко монетизувати чи продати вже зараз, щоб мінімізувати збитки.', type: 6 },
+      { text: 'Обдзвонюю знайомих — хтось точно виручить ресурсом, зв’язками чи свіжим поглядом.', type: 7 },
+      { text: 'Перевіряю: чи не суперечить порятунок проєкту моїм цінностям. Якщо так — краще чесна поразка, ніж компроміс.', type: 8 }
+    ]
+  },
+  {
+    id: 12,
+    title: 'Уяви. Все, що ти побудував(ла), завалилося за одну ніч. Ти втратив(ла) гроші, команду, репутацію. Ти сидиш у порожній кімнаті. Що ти зробиш у найближчі 24 години?',
+    options: [
+      { text: 'Почну малювати нову ідею на чистому аркуші. Руйнування — це простір для нового.', type: 1 },
+      { text: 'Зберу тих, хто залишився. Зателефоную тим, хто вірить у мене, і ми почнемо спочатку.', type: 2 },
+      { text: 'Розберу, що саме завалилося, знайду кореневу причину і спроєктую нову систему.', type: 3 },
+      { text: 'Зателефоную близьким. Спочатку підтримаю тих, кому гірше, ніж мені — і через них відновлюся.', type: 4 },
+      { text: 'Складу план відновлення: що залишилося, що потрібно, терміни, пріоритети.', type: 5 },
+      { text: 'Порахую, що збереглося, і знайду найшвидший спосіб повернути ресурс.', type: 6 },
+      { text: 'Знайду свою спільноту. Разом ми відновимося швидше, ніж поодинці.', type: 7 },
+      { text: 'Зупинюся. Зрозумію, чи не була ця система від самого початку неетичною, і почну заново з чистого сенсу.', type: 8 }
+    ]
+  },
+  {
+    id: 13,
+    title: 'Уяви. Ти дивишся на світ навколо через призму свого життя. Яким має бути світ, який ти залишиш наступним поколінням, щоб ти міг(ла) сказати, що виконав(ла) свій головний обов’язок?',
+    options: [
+      { text: 'Світ, де кожна людина має свободу творити і реалізовувати божевільні ідеї.', type: 1 },
+      { text: 'Світ сильних і сміливих людей, здатних об’єднуватися і брати відповідальність.', type: 2 },
+      { text: 'Світ, вибудуваний розумно і гармонійно, де рішення ухвалюються мудро.', type: 3 },
+      { text: 'Світ, у якому люди чують і підтримують одне одного, розвиваючись без страху.', type: 4 },
+      { text: 'Світ стабільності, безпеки та зрозумілих правил, де немає руйнівного хаосу.', type: 5 },
+      { text: 'Світ процвітання і чесних можливостей, де будь-яка праця приносить гідний плід.', type: 6 },
+      { text: 'Світ без кордонів та самотності, де люди об’єднані в єдину теплу спільноту.', type: 7 },
+      { text: 'Чистий, квітучий і здоровий світ, що живе в повній гармонії з природою.', type: 8 }
+    ]
+  },
+  {
+    /* Жорсткий trade-off. Один вибір. */
+    id: 14,
+    picks: 1,
+    title: 'Якби для досягнення твоєї мрії тобі довелося відмовитися від одного з цього НАЗАВЖДИ, що віддати було б для тебе найлегше?',
+    options: [
+      { text: 'Гарантовану стабільність і перевірені схеми — я готовий(а) ризикувати заради нового.', type: 1 },
+      { text: 'Особистий комфорт і спокійні вихідні — амбітна мета важливіша за відпочинок.', type: 2 },
+      { text: 'Право на імпульсивні, емоційні рішення — я надаю перевагу холодному розрахунку.', type: 3 },
+      { text: 'Можливість догоджати всім і бути хорошим(ою) для всіх — я готовий(а) до непорозуміння заради результату.', type: 4 },
+      { text: 'Можливість робити все по-своєму, без контролю й перевірок — я обираю дисципліну.', type: 5 },
+      { text: 'Ідеалізм, який гарно звучить, але не приносить грошей — я обираю окупність.', type: 6 },
+      { text: 'Широке, але поверхневе коло знайомих — я готовий(а) звузити фокус заради глибини мети.', type: 7 },
+      { text: 'Швидку вигоду й легкі перемоги — я обираю довгострокову місію, навіть якщо шлях довший.', type: 8 }
+    ]
+  },
+  {
+    id: 15,
+    title: 'Уяви. Ти досяг(ла) своєї головної мети. Ти сидиш у тиші й розумієш, що твоє життя змінилося назавжди. Що саме в цьому новому стані тішить тебе найбільше?',
+    options: [
+      { text: 'Я можу творити без обмежень і рамок, бачачи, як мої ідеї змінюють реальність.', type: 1 },
+      { text: 'Я відчуваю свою владу над обставинами і бачу, як команда росте й досягає висот.', type: 2 },
+      { text: 'Я бачу, як бездоганно працює система, яку я створив(ла), і я повністю вільний(на).', type: 3 },
+      { text: 'Я знаю, що допоміг(ла) сотням людей змінити свої долі на краще.', type: 4 },
+      { text: 'Моє життя сповнене передбачуваного спокою, а всі процеси працюють як годинник.', type: 5 },
+      { text: 'Я бачу конкретні цифри прибутку і розумію, що моя праця окупилася сторицею.', type: 6 },
+      { text: 'Навколо мене збирається потужна спільнота однодумців і партнерів.', type: 7 },
+      { text: 'Я знаю, що залишив(ла) після себе чистий, правильний і справедливий світ.', type: 8 }
+    ]
+  },
+  {
+    /* Голос мрії — тіньова сторона провідного вектора. Один вибір. */
+    id: 16,
+    picks: 1,
+    title: 'Якби твоя мрія могла говорити тобі правду про тебе прямо зараз — без прикрас і мотивації, — що б вона сказала?',
+    options: [
+      { text: '«У тебе сотні ідей, але ти боїшся, що жодна з них не варта реалізації.»', type: 1 },
+      { text: '«Ти ведеш інших, але всередині не впевнений(а), що сам(а) йдеш у правильному напрямку.»', type: 2 },
+      { text: '«Ти аналізуєш занадто багато і дієш занадто мало — параліч розуму.»', type: 3 },
+      { text: '«Ти віддаєшся людям до порожнечі, але рідко дозволяєш собі бути справжнім(ою).»', type: 4 },
+      { text: '«Ти тримаєш все на собі, бо не віриш, що система спрацює без твого контролю.»', type: 5 },
+      { text: '«Ти ганяєшся за цифрами й уже не пам’ятаєш, навіщо це починав(ла).»', type: 6 },
+      { text: '«Ти знаєш багатьох, але боїшся, що жоден із цих зв’язків не є справжнім.»', type: 7 },
+      { text: '«Ти борешся за правду, але відчуваєш, що світ не хоче її чути.»', type: 8 }
+    ]
+  },
+  {
+    id: 17,
+    title: 'Уяви. Ти піднявся(лася) на серйозну висоту. Ти успішний(на), у тебе є значні ресурси, стійке становище та вплив. Що саме ти бачиш навколо себе? Чого саме ти вже досяг(ла) з цих матеріальних та життєвих цілей?',
+    options: [
+      { text: 'Я створив(ла) масштабну інноваційну компанію, яка задає тренди на ринку і працює автономно.', type: 1 },
+      { text: 'Я заробляю мільйони, моя команда стала еталоном в індустрії, а моє ім’я — синонім успіху.', type: 2 },
+      { text: 'У мене сформований потужний портфель активів, а мої стратегічні прогнози визначають розвиток ринку.', type: 3 },
+      { text: 'Я запустив(ла) системний освітній або благодійний проєкт, який реально змінює долі тисяч людей.', type: 4 },
+      { text: 'Я створив(ла) надійний капітал і активи, які повністю забезпечують мене, моїх дітей та онуків.', type: 5 },
+      { text: 'Я вибудував(ла) високомаржинальний бізнес, продукти якого щодня купують сотні тисяч людей.', type: 6 },
+      { text: 'Я об’єднав(ла) найсильніших людей галузі в закриту, впливову і теплу бізнес-спільноту.', type: 7 },
+      { text: 'Я реалізував(ла) проєкти, які приносять реальну користь суспільству і захищають довкілля на системному рівні.', type: 8 }
+    ]
+  },
+  {
+    id: 18,
+    scored: false,
+    title: 'Як ти думаєш, скільки часу й особистої енергії на день знадобилося б людині, щоб втілити мрію такого масштабу (обрану тобою щойно) в реальність?',
+    options: [
+      { text: '1–2 години на день точкових, але системних дій без пропусків.', type: 1 },
+      { text: '2–4 години на день глибокого занурення в ключові процеси.', type: 2 },
+      { text: '5–6 годин на день віддачі — практично весь основний робочий день.', type: 3 },
+      { text: '8+ годин на день — зробити це своїм стилем життя і повністю жити проєктом.', type: 4 },
+      { text: 'Гнучкий графік — віддавати стільки годин, скільки вимагає конкретний етап.', type: 5 },
+      { text: 'Час і енергія команди — інвестувати ресурс у збір та управління людьми.', type: 6 },
+      { text: 'Пікова концентрація — не години відсидки, а максимальна точність у моменти рішень.', type: 7 },
+      { text: 'Повний масштаб — графік диктується метою: віддавати абсолютно весь необхідний час.', type: 8 }
+    ]
+  },
+  {
+    id: 19,
+    scored: false,
+    title: 'А тепер — момент істини. Повертаємося до тебе. З того обсягу часу і ресурсів, які об’єктивно потрібні для втілення в реальність твоєї мрії, скільки часу й особистої енергії ти реально готовий(а) інвестувати щодня, починаючи прямо сьогодні?',
+    options: [
+      { text: 'Я реально готовий(а) інвестувати 1–2 години на день, починаючи прямо сьогодні, і поступово нарощувати темп.', type: 1 },
+      { text: 'Я реально готовий(а) виділяти цей потужний блок у 2–4 години щодня заради реалізації своєї мрії.', type: 2 },
+      { text: 'Я реально готовий(а) інвестувати 5–6 годин на день і зробити отримання результату своїм головним пріоритетом.', type: 3 },
+      { text: 'Я реально готовий(а) зайти в проєкт із головою на 8+ годин на день без розгойдування і сумнівів.', type: 4 },
+      { text: 'Я реально готовий(а) включатися на максимум на кожному ключовому етапі створення своєї мрії.', type: 5 },
+      { text: 'Я реально готовий(а) вибудовувати команду, залучати ресурси та організовувати людей прямо відсьогодні.', type: 6 },
+      { text: 'Я реально готовий(а) віддати максимум своєї енергії, фокусу і точності дій на старті.', type: 7 },
+      { text: 'Я реально готовий(а) віддавати весь необхідний час, тому що моя мрія цього варта.', type: 8 }
+    ]
+  },
+  {
+    id: 20,
+    scored: false,
+    picks: 1,
+    title: 'Уяви. У тебе є справа, яка приносить стабільний і зростаючий дохід. Який рівень щомісячного доходу дозволить тобі відчувати абсолютну захищеність і свободу?',
+    options: [
+      { text: '$3 000 – $5 000: повне закриття базових потреб і спокій за побут.', type: 1 },
+      { text: '$10 000 – $25 000: високий рівень особистої свободи, подорожей і комфорту сім’ї.', type: 2 },
+      { text: '$50 000 – $100 000: масштабна фінансова незалежність, інвестиції та вільний капітал.', type: 3 },
+      { text: '$250 000+: необмежений ресурс для запуску великих міжнародних проєктів і фондів.', type: 4 }
+    ]
+  }
+
+]
+
+};
+
+</script>
+<script>
+// ===== script.js =====
+/* ============================================================================
+   ОТКРЫТИЕ ПУТИ · Genesis Solar Life
+   script.js — ЛОГИКА. Ни текстов, ни стилей здесь нет.
+   ----------------------------------------------------------------------------
+   Тексты живут в js/content-ru.js и js/content-ua.js, настройки — в js/config.js.
+
+   КЛЮЧЕВАЯ ИДЕЯ АРХИТЕКТУРЫ
+     Состояние хранит только ЧИСЛА: порядок перемешивания и номера
+     выбранных вариантов. Текст подставляется в момент отрисовки из
+     активного языка. Поэтому переключение языка — это просто повторная
+     отрисовка: прогресс, выборы и результат сохраняются полностью.
+
+   Разделы:
+     1. Состояние и DOM            6. Автосохранение
+     2. Языки                      7. Расчёт
+     3. Проверка контента          8. Результат «Ваш путь открыт»
+     4. Утилиты и таймер           9. Копирование
+     5. Экран вопроса             10. Запуск
+   ============================================================================ */
+(function(){
+'use strict';
+
+/* ============================================================
+   1. СОСТОЯНИЕ И DOM
+   ============================================================ */
+var CFG = window.appConfig;
+
+var state = {
+  lang:   CFG.defaultLang,
+  name:   '',
+  qIndex: 0,
+  order:  [],   // order[q] = перемешанные НОМЕРА вариантов вопроса q
+  picks:  [],   // picks[q] = номера выбранных вариантов по приоритетам
+  tick:   null,
+  left:   CFG.timeLimit,
+  date:   ''
+};
+
+var $ = function(id){ return document.getElementById(id); };
+var elIntro = $('screen-intro'), elQuiz = $('screen-quiz'), elResult = $('screen-result');
+var elOptions = $('options'), elNext = $('btn-next'), elName = $('user-name');
+var elDigits = $('timer-digits'), elTimerFill = $('timer-fill');
+var elToast = $('toast'), elToastText = $('toast-text'), elToastIcon = $('toast-icon');
+
+/* ============================================================
+   2. ЯЗЫКИ
+   ============================================================ */
+function L(){ return window.CONTENT[state.lang]; }          // активный языковой пакет
+function U(){ return L().ui; }                               // его интерфейсные строки
+function Q(){ return L().questions; }                        // его вопросы
+function T(){ return L().types; }                            // его психотипы
+
+/* Подстановка {переменных} в строку */
+function t(str, vars){
+  if (!str) return '';
+  if (!vars) return str;
+  return str.replace(/\{(\w+)\}/g, function(all, key){
+    return vars[key] !== undefined ? vars[key] : all;
+  });
+}
+
+var SCORED = [];       // индексы вопросов, участвующих в подсчёте
+var MAX_SCORE = 0;     // максимум баллов по одному вектору
+
+function recalcLimits(){
+  SCORED = [];
+  Q().forEach(function(q, i){ if (q.scored !== false) SCORED.push(i); });
+  MAX_SCORE = SCORED.length * (CFG.scoring === 'weighted' ? CFG.weights[0] : 1);
+}
+
+function picksOf(qi){
+  var q = Q()[qi];
+  return q.picks || CFG.picksDefault;
+}
+
+/* Переключатель языка в шапке */
+function buildLangSwitch(){
+  var box = $('lang-switch');
+  box.innerHTML = '';
+  CFG.languages.forEach(function(code){
+    var pack = window.CONTENT[code];
+    if (!pack) return;
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'lang-btn' + (code === state.lang ? ' active' : '');
+    b.textContent = pack.ui.label;
+    b.title = pack.ui.labelFull;
+    b.addEventListener('click', function(){ switchLang(code); });
+    box.appendChild(b);
+  });
+}
+
+function switchLang(code){
+  if (code === state.lang || !window.CONTENT[code]) return;
+  state.lang = code;
+  recalcLimits();
+  saveState();
+  applyLanguage();
+}
+
+/* Перерисовывает ВСЁ на активном языке, сохраняя текущий экран и прогресс */
+function applyLanguage(){
+  var u = U();
+
+  document.documentElement.lang = u.code;
+  document.title = u.brandTitle + ' | Genesis Solar Life';
+
+  $('brand-tag').textContent   = u.brandTag;
+  $('brand-title').textContent = u.brandTitle;
+  $('brand-sub').textContent   = u.brandSub;
+
+  $('intro-lead').innerHTML  = u.intro.lead;
+  $('intro-note').innerHTML  = u.intro.note;
+  $('intro-legal').textContent = u.intro.legal;
+  $('name-label').textContent  = u.intro.nameLabel;
+  elName.placeholder           = u.intro.namePlaceholder;
+  $('btn-start').textContent   = u.intro.start;
+  $('btn-last').textContent    = u.intro.last;
+
+  var badges = $('intro-badges');
+  badges.innerHTML = '';
+  u.intro.badges.forEach(function(text){
+    var s = document.createElement('span');
+    s.className = 'badge';
+    s.textContent = text;
+    badges.appendChild(s);
+  });
+
+  var resume = $('btn-resume');
+  if (!resume.classList.contains('hidden')){
+    resume.textContent = t(u.intro.resume, { n: state.qIndex + 1, m: Q().length });
+  }
+
+  $('timer-label').textContent = u.quiz.timerLabel;
+
+  buildLangSwitch();
+
+  if (!elQuiz.classList.contains('hidden')) renderQuestion(true);
+  if (!elResult.classList.contains('hidden')) renderResult();
+}
+
+/* ============================================================
+   3. ПРОВЕРКА КОНТЕНТА
+   Ловит рассинхрон языков и опечатки до того, как их увидит участник.
+   ============================================================ */
+function validateContent(){
+  var problems = [];
+  var base = window.CONTENT[CFG.defaultLang];
+
+  if (!base){ console.error('Нет языкового пакета ' + CFG.defaultLang); return false; }
+
+  CFG.languages.forEach(function(code){
+    var pack = window.CONTENT[code];
+    if (!pack){ problems.push('Не подключён файл языка: ' + code); return; }
+
+    if (pack.questions.length !== base.questions.length){
+      problems.push(code + ': вопросов ' + pack.questions.length +
+                    ', а в ' + CFG.defaultLang + ' — ' + base.questions.length);
+      return;
+    }
+
+    pack.questions.forEach(function(q, i){
+      var b = base.questions[i], where = code + ', вопрос #' + (i + 1);
+      if (q.id !== b.id) problems.push(where + ': id ' + q.id + ' вместо ' + b.id);
+      if (!q.title)      problems.push(where + ': пустой заголовок');
+      if (q.options.length !== b.options.length){
+        problems.push(where + ': вариантов ' + q.options.length + ', а должно быть ' + b.options.length);
+        return;
+      }
+      var seen = {};
+      q.options.forEach(function(o, j){
+        if (!o.text) problems.push(where + ', вариант ' + (j + 1) + ': пустой текст');
+        if (o.type !== b.options[j].type)
+          problems.push(where + ', вариант ' + (j + 1) + ': type ' + o.type + ' вместо ' + b.options[j].type);
+        if (seen[o.type]) problems.push(where + ': type ' + o.type + ' повторяется');
+        seen[o.type] = true;
+      });
+      var need = q.picks || CFG.picksDefault;
+      if (need > q.options.length) problems.push(where + ': нужно выбрать ' + need + ' из ' + q.options.length);
+      if (q.scored !== false){
+        q.options.forEach(function(o){
+          if (!pack.types[o.type]) problems.push(where + ': нет описания вектора ' + o.type);
+        });
+      }
+    });
+  });
+
+  /* Расширенный профиль: у каждого банка текстов должны быть все 8 векторов */
+  CFG.languages.forEach(function(code){
+    var pack = window.CONTENT[code];
+    if (!pack) return;
+    if (!pack.psych){ problems.push(code + ': нет блока psych'); return; }
+    ['shadow', 'sabotage', 'pressure', 'tradeoff', 'role', 'safety'].forEach(function(bank){
+      if (!pack.psych[bank]){ problems.push(code + ': нет psych.' + bank); return; }
+      for (var ty = 1; ty <= 8; ty++){
+        if (!pack.psych[bank][ty]) problems.push(code + ': psych.' + bank + ' — нет записи для вектора ' + ty);
+      }
+    });
+  });
+
+  var ids = base.questions.map(function(q){ return q.id; });
+  Object.keys(CFG.transcript).forEach(function(k){
+    if (ids.indexOf(CFG.transcript[k]) === -1)
+      problems.push('config.js → transcript.' + k + ' ссылается на вопрос ' + CFG.transcript[k] + ', которого нет');
+  });
+  Object.keys(CFG.triggers).forEach(function(k){
+    if (ids.indexOf(CFG.triggers[k]) === -1)
+      problems.push('config.js → triggers.' + k + ' ссылается на вопрос ' + CFG.triggers[k] + ', которого нет');
+  });
+
+  if (problems.length){
+    console.error('%c[Открытие Пути] Проблемы в контенте:', 'color:#FF4D4D;font-weight:bold');
+    problems.forEach(function(p){ console.error('  • ' + p); });
+    return false;
+  }
+  console.log('%c[Открытие Пути] Контент в порядке: ' + base.questions.length + ' вопросов, ' +
+              SCORED.length + ' в подсчёте, максимум ' + MAX_SCORE + ' баллов, режим «' +
+              CFG.scoring + '», языки: ' + CFG.languages.join(', ') + '.', 'color:#D4AF37');
+  return true;
+}
+
+/* ============================================================
+   4. УТИЛИТЫ И ТАЙМЕР
+   ============================================================ */
+function shuffle(arr){                       // Fisher–Yates
+  var a = arr.slice(), i, j, tmp;
+  for (i = a.length - 1; i > 0; i--){
+    j = Math.floor(Math.random() * (i + 1));
+    tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+  }
+  return a;
+}
+
+function esc(s){
+  return String(s).replace(/[&<>"']/g, function(c){
+    return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+  });
+}
+
+function load(){ try { return JSON.parse(localStorage.getItem(CFG.storeKey)); } catch(e){ return null; } }
+function store(v){ try { localStorage.setItem(CFG.storeKey, JSON.stringify(v)); } catch(e){} }
+
+function today(){
+  var d = new Date(), p = function(n){ return String(n).length < 2 ? '0' + n : String(n); };
+  return p(d.getDate()) + '.' + p(d.getMonth() + 1) + '.' + d.getFullYear();
+}
+
+var toastTimer = null;
+function toast(text, icon, ms){
+  elToastText.textContent = text;
+  elToastIcon.textContent = icon || '✨';
+  elToast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ elToast.classList.remove('show'); }, ms || 4500);
+}
+elToast.addEventListener('click', function(){ elToast.classList.remove('show'); });
+
+function showScreen(el){
+  [elIntro, elQuiz, elResult].forEach(function(s){ s.classList.add('hidden'); });
+  el.classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function startTimer(){
+  stopTimer();
+  state.left = CFG.timeLimit;
+  paintTimer();
+  resumeTimer();
+}
+
+function resumeTimer(){
+  if (state.tick || state.left <= 0) return;
+  state.tick = setInterval(function(){
+    state.left--;
+    paintTimer();
+    if (state.left <= 0){
+      stopTimer();
+      if (isComplete()) nextQuestion();
+      else toast(U().toast.timeout, '🕊', 6000);
+    }
+  }, 1000);
+}
+
+function stopTimer(){ if (state.tick){ clearInterval(state.tick); state.tick = null; } }
+
+function paintTimer(){
+  var left = Math.max(0, state.left);
+  elDigits.textContent = left;                                    // чистые цифры: 88, 87, 86…
+  elTimerFill.style.width = (left / CFG.timeLimit * 100) + '%';
+  elQuiz.classList.toggle('state-warn',   left <= CFG.warnAt && left > CFG.dangerAt);
+  elQuiz.classList.toggle('state-danger', left <= CFG.dangerAt);
+}
+
+document.addEventListener('visibilitychange', function(){
+  if (elQuiz.classList.contains('hidden')) return;
+  if (document.hidden) stopTimer();
+  else { paintTimer(); resumeTimer(); }
+});
+
+/* ============================================================
+   5. ЭКРАН ВОПРОСА
+   На экране только заголовок вопроса и карточки — без подсказок.
+   ============================================================ */
+function renderQuestion(keepTimer){
+  var qi = state.qIndex, q = Q()[qi], u = U();
+
+  $('q-counter').textContent = t(u.quiz.counter, { n: qi + 1, m: Q().length });
+  $('q-fill').style.width = ((qi + 1) / Q().length * 100) + '%';
+  $('q-title').textContent = q.title;
+
+  elOptions.innerHTML = '';
+  state.order[qi].forEach(function(optIdx){
+    var card = document.createElement('div');
+    card.className = 'opt';
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.dataset.opt = optIdx;
+    card.innerHTML = '<div class="slot"></div><div class="opt-text">' + esc(q.options[optIdx].text) + '</div>';
+    card.addEventListener('click', function(){ pick(optIdx); });
+    card.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); pick(optIdx); }
+    });
+    elOptions.appendChild(card);
+  });
+
+  elOptions.classList.remove('swap');
+  void elOptions.offsetWidth;
+  elOptions.classList.add('swap');
+
+  paintPicks();
+  if (!keepTimer) startTimer();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* Клик по карточке: 1 → 2 → 3, повторный клик снимает именно эту цифру */
+function pick(optIdx){
+  var slots = state.picks[state.qIndex];
+  var at = slots.indexOf(optIdx);
+
+  if (at !== -1){
+    slots[at] = null;
+  } else {
+    var free = slots.indexOf(null);
+    if (free === -1){ toast(U().toast.full, '↺', 2600); return; }
+    slots[free] = optIdx;
+  }
+  paintPicks();
+  saveState();
+}
+
+function paintPicks(){
+  var slots = state.picks[state.qIndex];
+  var cards = elOptions.querySelectorAll('.opt');
+
+  Array.prototype.forEach.call(cards, function(card){
+    var optIdx = +card.dataset.opt;
+    var rank = slots.indexOf(optIdx) + 1;
+    var slot = card.querySelector('.slot');
+    if (rank){ card.dataset.rank = rank; slot.textContent = rank; }
+    else { delete card.dataset.rank; slot.textContent = ''; }
+  });
+
+  var need = picksOf(state.qIndex);
+  var done = slots.filter(function(v){ return v !== null; }).length;
+  var last = state.qIndex === Q().length - 1;
+  var u = U();
+
+  elNext.disabled = done !== need;
+  elNext.textContent = done === need
+    ? (last ? u.quiz.finish : u.quiz.next)
+    : t(u.quiz.picked, { n: done, m: need });
+}
+
+function isComplete(){
+  return state.picks[state.qIndex].every(function(v){ return v !== null; });
+}
+
+function nextQuestion(){
+  stopTimer();
+  if (state.qIndex + 1 < Q().length){
+    state.qIndex++;
+    saveState();
+    renderQuestion();
+  } else {
+    finish();
+  }
+}
+
+/* ============================================================
+   6. АВТОСОХРАНЕНИЕ
+   ============================================================ */
+function saveState(){
+  var data = load() || {};
+  data.lang = state.lang;
+  data.name = state.name;
+  data.progress = {
+    qIndex: state.qIndex,
+    order:  state.order,
+    picks:  state.picks,
+    at:     Date.now()
+  };
+  store(data);
+}
+
+function saveRun(){
+  var data = load() || {};
+  data.lang = state.lang;
+  data.name = state.name;
+  data.run  = { order: state.order, picks: state.picks, date: state.date, name: state.name };
+  delete data.progress;
+  store(data);
+}
+
+function progressFits(p){
+  if (!p || !p.picks || p.picks.length !== Q().length) return false;
+  return p.picks.every(function(slots, qi){
+    return slots.length === picksOf(qi) && p.order[qi].length === Q()[qi].options.length;
+  });
+}
+
+/* ============================================================
+   7. РАСЧЁТ
+   ============================================================ */
+function calculate(){
+  var scores = {}, i;
+  for (i = 1; i <= 8; i++) scores[i] = 0;
+
+  state.picks.forEach(function(slots, qi){
+    if (Q()[qi].scored === false) return;                 // вопросы 14–16 баллов не дают
+    slots.forEach(function(optIdx, slotPos){
+      if (optIdx === null) return;
+      var type = Q()[qi].options[optIdx].type;
+      scores[type] += (CFG.scoring === 'weighted') ? CFG.weights[slotPos] : 1;
+    });
+  });
+
+  var ranking = Object.keys(scores).map(function(k){
+    return { type: +k, score: scores[k] };
+  }).sort(function(a, b){ return b.score - a.score || a.type - b.type; });
+
+  /* Дословный ответ: qId — id вопроса, slot — приоритет (0 = первый) */
+  function optOf(qId, slot){
+    var qi = -1;
+    Q().forEach(function(q, i){ if (q.id === qId) qi = i; });
+    if (qi === -1 || !state.picks[qi]) return null;
+    var idx = state.picks[qi][slot];
+    return (idx === null || idx === undefined) ? null : Q()[qi].options[idx];
+  }
+  function textOf(qId, slot){
+    var o = optOf(qId, slot);
+    return o ? o.text : '—';
+  }
+
+  var tr = CFG.transcript;
+  var priceOpt  = optOf(tr.price, 0);
+  var commitOpt = optOf(tr.commitment, 0);
+  var need = priceOpt  ? CFG.hoursByType[priceOpt.type]  : 0;
+  var give = commitOpt ? CFG.hoursByType[commitOpt.type] : 0;
+
+  /* Триггерные ответы расширенного профиля: берётся вариант,
+     поставленный на 1 приоритет. Если вопрос не отвечен — null,
+     и соответствующий блок просто не выводится. */
+  function triggerType(qId){
+    var o = optOf(qId, 0);
+    return o ? o.type : null;
+  }
+  var trig = {
+    sabotage: triggerType(CFG.triggers.sabotage),
+    pressure: triggerType(CFG.triggers.pressure),
+    tradeoff: triggerType(CFG.triggers.tradeoff),
+    shadow:   triggerType(CFG.triggers.shadow)
+  };
+
+  return {
+    date:      state.date || today(),
+    name:      state.name || U().intro.namePlaceholder,
+    ranking:   ranking,
+    lead:      ranking[0].type,
+    leadScore: ranking[0].score,
+    sub:       ranking[1].type,
+    subScore:  ranking[1].score,
+    tie:       ranking[0].score === ranking[1].score,
+    dream:     [textOf(tr.dream, 0), textOf(tr.dream, 1), textOf(tr.dream, 2)],
+    price:     textOf(tr.price, 0),
+    commit:    textOf(tr.commitment, 0),
+    income:    textOf(tr.income, 0),
+    needHours: need,
+    giveHours: give,
+    readiness: need ? Math.min(100, Math.round(give / need * 100)) : 0,
+    trig:      trig
+  };
+}
+
+function readinessLevel(v){
+  var list = U().readiness, i;
+  for (i = 0; i < list.length; i++) if (v >= list[i].min) return list[i];
+  return list[list.length - 1];
+}
+
+/* ============================================================
+   8. РЕЗУЛЬТАТ · «ВАШ ПУТЬ ОТКРЫТ»
+   ============================================================ */
+function finish(){
+  stopTimer();
+  state.date = today();
+  saveRun();
+  renderResult();
+  showScreen(elResult);
+}
+
+function renderResult(){
+  var r = calculate(), u = U().result, types = T();
+  var Lt = types[r.lead], St = types[r.sub];
+  var lvl = readinessLevel(r.readiness);
+  var tr  = CFG.transcript;
+  var pct = function(s){ return Math.round(s / MAX_SCORE * 100); };
+
+  /* ---------- Расширенный психологический профиль ----------
+     Каждый блок собирается из конкретного ответа. Если триггерный вопрос
+     остался без ответа, блок молча не выводится, а не ломает отчёт. */
+  var P = L().psych, pu = P.ui;
+
+  function blockState(){
+    if (!r.trig.shadow) return '';
+    var sh = P.shadow[r.trig.shadow];
+    var echo = (r.trig.shadow === r.lead)
+      ? t(pu.echoSame, { lead: Lt.name })
+      : t(pu.echoDiff, { shadow: types[r.trig.shadow].name, lead: Lt.name });
+    return '<div class="block">' +
+      '<div class="block-title">' + esc(pu.stateTitle) + '</div>' +
+      '<div class="sub-label">' + esc(pu.stateLead) + '</div>' +
+      '<div class="vector-name shimmer-text" style="font-size:1.3rem">' + esc(sh.title) + '</div>' +
+      '<p class="vector-desc">' + esc(sh.text) + '</p>' +
+      '<div class="spacer-s"></div>' +
+      '<div class="pill"><p>' + esc(echo) + '</p></div>' +
+    '</div>';
+  }
+
+  function blockStress(){
+    if (!r.trig.sabotage && !r.trig.pressure) return '';
+    var sab = r.trig.sabotage ? P.sabotage[r.trig.sabotage] : null;
+    var cop = r.trig.pressure ? P.pressure[r.trig.pressure] : null;
+    return '<div class="block">' +
+      '<div class="block-title">' + esc(pu.stressTitle) + '</div>' +
+      '<div class="split">' +
+        (sab ? '<div>' +
+                 '<div class="sub-label">' + esc(pu.stressStop) + '</div>' +
+                 '<div class="vector-name silver" style="font-size:1.22rem">' + esc(sab.title) + '</div>' +
+                 '<p class="vector-desc">' + esc(sab.text) + '</p>' +
+               '</div>' : '') +
+        (cop ? '<div>' +
+                 '<div class="sub-label">' + esc(pu.stressCope) + '</div>' +
+                 '<div class="vector-name shimmer-text" style="font-size:1.22rem">' + esc(cop.title) + '</div>' +
+                 '<p class="vector-desc">' + esc(cop.text) + '</p>' +
+               '</div>' : '') +
+      '</div>' +
+      (cop ? '<div class="spacer-m"></div>' +
+             '<div class="pill burn"><h4>' + esc(pu.stressRisk) + '</h4><p>' + esc(cop.risk) + '</p></div>' : '') +
+    '</div>';
+  }
+
+  function blockProject(){
+    var ro = P.role[r.lead];
+    var td = r.trig.tradeoff ? P.tradeoff[r.trig.tradeoff] : null;
+    return '<div class="block">' +
+      '<div class="block-title">' + esc(pu.projectTitle) + '</div>' +
+      '<div class="sub-label">' + esc(pu.projectRole) + '</div>' +
+      '<div class="vector-name shimmer-text" style="font-size:1.3rem">' + esc(ro.role) + '</div>' +
+      '<div class="spacer-s"></div>' +
+      '<div class="pill-grid">' +
+        '<div class="pill"><h4>' + esc(pu.projectDeleg) + '</h4><p>' + esc(ro.delegation) + '</p></div>' +
+        '<div class="pill burn"><h4>' + esc(pu.projectFric) + '</h4><p>' + esc(ro.friction) + '</p></div>' +
+      '</div>' +
+      (td ? '<div class="spacer-m"></div>' +
+            '<div class="sub-label">' + esc(pu.projectPrice) + '</div>' +
+            '<div class="quote-line"><b>' + esc(td.title) + '.</b> ' + esc(td.text) + '</div>' : '') +
+    '</div>';
+  }
+
+  function blockSafety(){
+    var sf = P.safety[r.lead];
+    var qs = [CFG.triggers.sabotage, CFG.triggers.pressure, CFG.triggers.tradeoff, CFG.triggers.shadow]
+             .sort(function(a, b){ return a - b; }).join(', ');
+    return '<div class="block">' +
+      '<div class="block-title">' + esc(pu.safetyTitle) + '</div>' +
+      '<ul class="task-list">' +
+        '<li><b>' + esc(pu.safetyAvoid)  + '</b><br>' + esc(sf.avoid)    + '</li>' +
+        '<li><b>' + esc(pu.safetyMetric) + '</b><br>' + esc(sf.metric)   + '</li>' +
+        '<li><b>' + esc(pu.safetyDeleg)  + '</b><br>' + esc(sf.delegate) + '</li>' +
+      '</ul>' +
+      '<div class="spacer-s"></div>' +
+      '<p class="legal" style="text-align:left">' + esc(t(pu.disclaimer, { q: qs })) + '</p>' +
+    '</div>';
+  }
+
+  var bars = r.ranking.map(function(row, idx){
+    var cls = idx === 0 ? ' top' : (idx === 1 ? ' second' : '');
+    return '<div class="bar-row' + cls + '">' +
+             '<div class="bar-name">' + esc(types[row.type].name) + '</div>' +
+             '<div class="bar-val">' + row.score + ' · ' + pct(row.score) + '%</div>' +
+             '<div class="bar-track"><div class="bar-fill" data-w="' + pct(row.score) + '"></div></div>' +
+           '</div>';
+  }).join('');
+
+  var tasks = Lt.tasks.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('');
+
+  var reflect = U().reflect.map(function(x){
+    return '<li>' + esc(t(x, { lead: Lt.name, sub: St.name, readiness: r.readiness })) +
+           '<span class="write-line"></span><span class="write-line"></span></li>';
+  }).join('');
+
+  var tieNote = r.tie
+    ? '<p class="vector-desc" style="margin-top:12px"><b>' + esc(u.mixedWord) + '</b> ' + esc(u.mixedText) + '</p>'
+    : '';
+
+  elResult.innerHTML =
+  '<div class="result-top">' +
+    '<div class="result-chip">' + esc(u.chip) + '</div>' +
+    '<div class="result-name">' + t(esc(u.dateLine), { name: '<b>' + esc(r.name) + '</b>', date: r.date }) + '</div>' +
+  '</div>' +
+
+  '<div class="block">' +
+    '<div class="block-title">' + esc(u.block1) + '</div>' +
+    '<div class="sub-label">' + esc(t(u.dream, { id: tr.dream })) + '</div>' +
+    '<ul class="dream-list">' +
+      '<li><span class="medal">🥇</span><span>' + esc(r.dream[0]) + '</span></li>' +
+      '<li><span class="medal">🥈</span><span>' + esc(r.dream[1]) + '</span></li>' +
+      '<li><span class="medal">🥉</span><span>' + esc(r.dream[2]) + '</span></li>' +
+    '</ul>' +
+    '<div class="spacer-m"></div>' +
+    '<div class="sub-label">' + esc(t(u.price, { id: tr.price })) + '</div>' +
+    '<div class="quote-line">' + esc(r.price) + '</div>' +
+    '<div class="spacer-s"></div>' +
+    '<div class="sub-label">' + esc(t(u.commit, { id: tr.commitment })) + '</div>' +
+    '<div class="quote-line">' + esc(r.commit) + '</div>' +
+    '<div class="spacer-s"></div>' +
+    '<div class="sub-label">' + esc(t(u.income, { id: tr.income })) + '</div>' +
+    '<div class="quote-line">' + esc(r.income) + '</div>' +
+
+    '<div class="gauge ' + levelClass(r.readiness) + '">' +
+      '<div class="gauge-head">' +
+        '<span class="sub-label">' + esc(t(u.gauge, { title: lvl.title })) + '</span>' +
+        '<span class="gauge-value">' + r.readiness + '%</span>' +
+      '</div>' +
+      '<div class="gauge-track"><div class="gauge-fill" data-w="' + r.readiness + '"></div></div>' +
+      '<p class="gauge-note">' + esc(lvl.note) + '</p>' +
+      '<p class="gauge-note" style="font-size:.8rem;color:#5A636E">' +
+        esc(t(u.gaugeHint, { need: r.needHours, give: r.giveHours })) + '</p>' +
+    '</div>' +
+  '</div>' +
+
+  '<div class="block">' +
+    '<div class="block-title">' + esc(u.block2) + '</div>' +
+    '<div class="split">' +
+      '<div>' +
+        '<div class="sub-label">' + esc(u.leadLabel) + '</div>' +
+        '<div class="vector-name shimmer-text">' + esc(Lt.name) + '</div>' +
+        '<div class="vector-score">' + esc(t(u.score, { s: r.leadScore, m: MAX_SCORE, p: pct(r.leadScore) })) +
+          ' · ' + esc(Lt.tagline) + '</div>' +
+        '<p class="vector-desc">' + esc(Lt.desc) + '</p>' +
+      '</div>' +
+      '<div>' +
+        '<div class="sub-label">' + esc(u.subLabel) + '</div>' +
+        '<div class="vector-name silver">' + esc(St.name) + '</div>' +
+        '<div class="vector-score">' + esc(t(u.score, { s: r.subScore, m: MAX_SCORE, p: pct(r.subScore) })) +
+          ' · ' + esc(St.tagline) + '</div>' +
+        '<p class="vector-desc"><b>' + esc(u.synergyWord) + '</b> ' +
+          esc(t(u.synergyText, { lead: Lt.name, text: St.synergy })) + '</p>' +
+        tieNote +
+      '</div>' +
+    '</div>' +
+    '<div class="spacer-m"></div>' +
+    '<div class="sub-label">' + esc(u.histogram) + '</div>' +
+    '<div class="spacer-s"></div>' +
+    '<div class="bars">' + bars + '</div>' +
+    '<div class="spacer-m"></div>' +
+    '<div class="pill-grid">' +
+      '<div class="pill power"><h4>' + esc(u.power) + '</h4><p>' + esc(Lt.power) + '</p></div>' +
+      '<div class="pill burn"><h4>' + esc(u.burnout) + '</h4><p>' + esc(Lt.burnout) + '</p></div>' +
+    '</div>' +
+  '</div>' +
+
+  /* ---------- 3 · состояние на сейчас, 4 · стресс-профиль ---------- */
+  blockState() +
+  blockStress() +
+
+  /* ---------- 5 · реализация в экосистеме ---------- */
+  '<div class="block">' +
+    '<div class="block-title">' + esc(u.block3) + '</div>' +
+    '<div class="sub-label">' + esc(u.direction) + '</div>' +
+    '<div class="vector-name shimmer-text" style="font-size:1.35rem">' + esc(Lt.role) + '</div>' +
+    '<div class="spacer-s"></div>' +
+    '<div class="sub-label">' + esc(u.tasks) + '</div>' +
+    '<ul class="task-list">' + tasks + '</ul>' +
+    '<div class="spacer-m"></div>' +
+    '<div class="pill">' +
+      '<h4>' + esc(u.allyTitle) + '</h4>' +
+      '<p>' + t(u.allyText, { sub: esc(St.name), text: esc(St.synergy) }) + '<br><br>' +
+        t(u.allyMore, { list: esc(Lt.allies.map(function(x){ return types[x].name; }).join(' · ')) }) + '</p>' +
+    '</div>' +
+  '</div>' +
+
+  /* ---------- 6 · операционный профиль, 7 · правила безопасности ---------- */
+  blockProject() +
+  blockSafety() +
+
+  '<div class="actions no-print">' +
+    '<button id="btn-copy" class="btn btn-emerald">' + esc(u.copy) + '</button>' +
+    '<button id="btn-print" class="btn btn-sapphire">' + esc(u.print) + '</button>' +
+  '</div>' +
+
+  '<div class="block">' +
+    '<div class="block-title">' + esc(u.block4) + '</div>' +
+    '<ol class="reflect-list">' + reflect + '</ol>' +
+  '</div>' +
+
+  '<button id="btn-restart" class="btn btn-ghost no-print">' + esc(u.restart) + '</button>' +
+  '<p class="legal">' + esc(t(u.legal, { date: r.date })) + '</p>';
+
+  requestAnimationFrame(function(){
+    Array.prototype.forEach.call(elResult.querySelectorAll('[data-w]'), function(f){
+      f.style.width = f.dataset.w + '%';
+    });
+  });
+
+  $('btn-copy').addEventListener('click', copyReport);
+  $('btn-print').addEventListener('click', function(){ window.print(); });
+  $('btn-restart').addEventListener('click', function(){ showScreen(elIntro); });
+}
+
+/* Класс шкалы готовности по её значению */
+function levelClass(v){ return v >= 65 ? 'lvl-high' : (v >= 40 ? 'lvl-mid' : 'lvl-low'); }
+
+/* ============================================================
+   9. КОПИРОВАНИЕ ОТЧЁТА
+   ============================================================ */
+function buildReportText(){
+  var r = calculate(), R = U().report, types = T();
+  var Lt = types[r.lead], St = types[r.sub];
+  var tr = CFG.transcript, line = new Array(51).join('=');
+
+  return [
+    R.title,
+    t(R.user, { name: r.name }),
+    t(R.date, { date: r.date }),
+    line,
+    '',
+    t(R.s1, { id: tr.dream }),
+    R.p1 + r.dream[0],
+    R.p2 + r.dream[1],
+    R.p3 + r.dream[2],
+    '',
+    t(R.s2, { a: tr.price, b: tr.commitment }),
+    R.need,
+    '   » ' + r.price,
+    R.give,
+    '   » ' + r.commit,
+    R.income,
+    '   » ' + r.income,
+    t(R.readiness, { v: r.readiness, title: readinessLevel(r.readiness).title }),
+    '',
+    R.s3,
+    t(R.leadLine, { name: Lt.name, score: r.leadScore }),
+    t(R.subLine,  { name: St.name, score: r.subScore }),
+    t(R.powerLine, { text: Lt.power }),
+    t(R.burnLine,  { text: Lt.burnout }),
+    '',
+    R.s4,
+    t(R.roleLine, { role: Lt.role, tasks: Lt.tasks.join('; ') }),
+    t(R.allyLine, { name: St.name })
+  ].concat(psychReportLines(r)).concat([
+    '',
+    line,
+    R.footer
+  ]).join('\n');
+}
+
+/* Расширенный профиль в текстовом отчёте: то же содержание, что на экране,
+   но сжато до строк, которые удобно читать в мессенджере. */
+function psychReportLines(r){
+  var P = L().psych, pu = P.ui, R = U().report, types = T();
+  var out = [];
+
+  if (r.trig.shadow){
+    out.push('', R.s5, '• ' + P.shadow[r.trig.shadow].title + ': ' + P.shadow[r.trig.shadow].text);
+    out.push('• ' + (r.trig.shadow === r.lead
+      ? t(pu.echoSame, { lead: types[r.lead].name })
+      : t(pu.echoDiff, { shadow: types[r.trig.shadow].name, lead: types[r.lead].name })));
+  }
+
+  if (r.trig.sabotage || r.trig.pressure){
+    out.push('', R.s6);
+    if (r.trig.sabotage) out.push('• ' + pu.stressStop + ': ' + P.sabotage[r.trig.sabotage].title +
+                                  ' — ' + P.sabotage[r.trig.sabotage].text);
+    if (r.trig.pressure) out.push('• ' + pu.stressCope + ': ' + P.pressure[r.trig.pressure].title +
+                                  ' — ' + P.pressure[r.trig.pressure].text,
+                                  '• ' + pu.stressRisk + ': ' + P.pressure[r.trig.pressure].risk);
+  }
+
+  var ro = P.role[r.lead], sf = P.safety[r.lead];
+  out.push('', R.s7,
+           '• ' + pu.projectRole  + ': ' + ro.role,
+           '• ' + pu.projectDeleg + ': ' + ro.delegation,
+           '• ' + pu.projectFric  + ': ' + ro.friction);
+  if (r.trig.tradeoff) out.push('• ' + pu.projectPrice + ': ' + P.tradeoff[r.trig.tradeoff].title +
+                                ' — ' + P.tradeoff[r.trig.tradeoff].text);
+
+  out.push('', R.s8,
+           '• ' + pu.safetyAvoid  + ': ' + sf.avoid,
+           '• ' + pu.safetyMetric + ': ' + sf.metric,
+           '• ' + pu.safetyDeleg  + ': ' + sf.delegate);
+
+  return out;
+}
+
+function copyReport(){
+  var text = buildReportText();
+  var ok   = function(){ toast(U().toast.copied, '✅', 3500); };
+  var fail = function(){ toast(U().toast.copyFail, '⚠️', 5000); };
+
+  if (navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(text).then(ok, function(){ legacyCopy(text) ? ok() : fail(); });
+  } else {
+    legacyCopy(text) ? ok() : fail();     // file:// не является secure context
+  }
+}
+
+function legacyCopy(text){
+  try{
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:0;left:-9999px;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    var okFlag = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return okFlag;
+  }catch(e){ return false; }
+}
+
+/* ============================================================
+   10. ЗАПУСК
+   ============================================================ */
+function startQuiz(){
+  state.name   = (elName.value || '').trim().slice(0, 40);
+  state.qIndex = 0;
+  state.date   = '';
+  state.order  = Q().map(function(q){
+    return shuffle(q.options.map(function(o, i){ return i; }));      // Fisher–Yates
+  });
+  state.picks  = Q().map(function(q, i){
+    var arr = [], n = picksOf(i);
+    while (arr.length < n) arr.push(null);
+    return arr;
+  });
+  saveState();
+  $('btn-resume').classList.add('hidden');
+  showScreen(elQuiz);
+  renderQuestion();
+}
+
+elNext.addEventListener('click', function(){ if (isComplete()) nextQuestion(); });
+$('btn-start').addEventListener('click', startQuiz);
+elName.addEventListener('keydown', function(e){ if (e.key === 'Enter') startQuiz(); });
+
+/* Горячие клавиши 1–8 на экране вопроса */
+document.addEventListener('keydown', function(e){
+  if (elQuiz.classList.contains('hidden')) return;
+  if (e.target && e.target.tagName === 'INPUT') return;
+  var n = parseInt(e.key, 10);
+  if (n >= 1 && n <= state.order[state.qIndex].length) pick(state.order[state.qIndex][n - 1]);
+});
+
+(function init(){
+  var saved = load() || {};
+
+  if (saved.lang && window.CONTENT[saved.lang]) state.lang = saved.lang;
+  recalcLimits();
+  if (!validateContent()) { /* приложение продолжит работу, ошибки уже в консоли */ }
+
+  if (saved.name) elName.value = saved.name;
+
+  /* Незавершённая диагностика */
+  if (saved.progress && progressFits(saved.progress)){
+    var btn = $('btn-resume');
+    btn.classList.remove('hidden');
+    state.qIndex = saved.progress.qIndex;
+    btn.addEventListener('click', function(){
+      state.name   = (elName.value || '').trim().slice(0, 40) || saved.name || '';
+      state.order  = saved.progress.order;
+      state.picks  = saved.progress.picks;
+      state.qIndex = saved.progress.qIndex;
+      showScreen(elQuiz);
+      renderQuestion();
+    });
+  }
+
+  /* Готовый результат прошлого прохождения */
+  if (saved.run && saved.run.picks && saved.run.picks.length === Q().length){
+    var btnLast = $('btn-last');
+    btnLast.classList.remove('hidden');
+    btnLast.addEventListener('click', function(){
+      state.order = saved.run.order;
+      state.picks = saved.run.picks;
+      state.name  = saved.run.name || saved.name || '';
+      state.date  = saved.run.date;
+      renderResult();
+      showScreen(elResult);
+    });
+  }
+
+  applyLanguage();
+})();
+
+})();
+
+</script>
+</body>
+</html>

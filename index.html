@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<!--
+  ============================================================================
+  ОТКРЫТИЕ ПУТИ / ВІДКРИТТЯ ШЛЯХУ · Genesis Solar Life
+  index.html — ТОЛЬКО каркас. Все тексты подставляются из языковых файлов,
+  поэтому здесь почти нет слов: элементы заполняются в applyLanguage().
+  ----------------------------------------------------------------------------
+    css/style.css        все цвета, анимации, печать
+    js/config.js         настройки: таймер, режим подсчёта, языки
+    js/content-ru.js     весь русский текст
+    js/content-ua.js     весь украинский текст
+    js/script.js         логика
+    build.ps1            собирает всё в один файл dist/index.html
+  ============================================================================
+-->
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#07090E">
+<meta name="color-scheme" content="dark">
+<title>ОТКРЫТИЕ ПУТИ | Genesis Solar Life</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23FBF5B7'/%3E%3Cstop offset='0.5' stop-color='%23D4AF37'/%3E%3Cstop offset='1' stop-color='%238A6417'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath fill='url(%23g)' d='M32 2 62 32 32 62 2 32Z'/%3E%3Cpath fill='%2307090E' d='M32 17 47 32 32 47 17 32Z'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ==================== ШАПКА ==================== -->
+  <header class="brand">
+    <div class="lang-switch no-print" id="lang-switch"></div>
+    <div class="brand-tag" id="brand-tag"></div>
+    <h1 class="brand-title shimmer-text" id="brand-title"></h1>
+    <div class="divider"><i></i></div>
+    <p class="brand-sub" id="brand-sub"></p>
+  </header>
+
+  <!-- ==================== ЭКРАН 1 · СТАРТ ==================== -->
+  <section id="screen-intro" class="screen">
+    <p class="intro-lead" id="intro-lead"></p>
+    <div class="intro-note" id="intro-note"></div>
+    <div class="badges" id="intro-badges"></div>
+
+    <div class="field">
+      <label for="user-name" id="name-label"></label>
+      <input id="user-name" type="text" maxlength="40" autocomplete="name" spellcheck="false">
+    </div>
+
+    <button id="btn-start"  class="btn btn-gold pulse"></button>
+    <button id="btn-resume" class="btn btn-ghost hidden" style="margin-top:11px"></button>
+    <button id="btn-last"   class="btn btn-ghost hidden" style="margin-top:11px"></button>
+
+    <p class="legal" id="intro-legal"></p>
+  </section>
+
+  <!-- ==================== ЭКРАН 2 · ВОПРОСЫ ====================
+       По ТЗ: только заголовок вопроса и карточки. Никаких подсказок
+       и пояснений рядом с вопросом. -->
+  <section id="screen-quiz" class="screen hidden">
+    <div class="quiz-top">
+      <div class="q-counter" id="q-counter"></div>
+      <div class="timer-box">
+        <div class="timer-digits" id="timer-digits">88</div>
+        <div class="timer-label" id="timer-label"></div>
+      </div>
+    </div>
+
+    <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
+    <div class="q-track"><div class="q-fill" id="q-fill"></div></div>
+
+    <h2 class="q-title" id="q-title"></h2>
+
+    <div class="options" id="options"></div>
+
+    <button id="btn-next" class="btn btn-gold" disabled></button>
+  </section>
+
+  <!-- ==================== ЭКРАН 3 · РЕЗУЛЬТАТ ====================
+       Содержимое генерируется в js/script.js → renderResult() -->
+  <section id="screen-result" class="screen hidden"></section>
+
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <div class="toast-icon" id="toast-icon">✨</div>
+  <div class="toast-text" id="toast-text"></div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/content-ru.js"></script>
+<script src="js/content-ua.js"></script>
+<script src="js/script.js"></script>
+</body>
+</html>
