@@ -47,17 +47,27 @@
       <input id="user-name" type="text" maxlength="40" autocomplete="name" spellcheck="false">
     </div>
 
-    <!-- Поле показывается, только если включён сбор ответов (config.js → submit) -->
-    <div class="field hidden" id="contact-field">
+    <!-- Скрывается автоматически, если анкета открыта внутри Telegram:
+         там имя пользователя уже известно. -->
+    <div class="field" id="contact-field">
       <label for="user-contact" id="contact-label"></label>
-      <input id="user-contact" type="text" maxlength="60" autocomplete="tel" spellcheck="false">
+      <input id="user-contact" type="text" maxlength="60" autocomplete="username" spellcheck="false">
+    </div>
+
+    <p class="tg-hello hidden" id="tg-hello"></p>
+
+    <div class="consent">
+      <label class="consent-label" for="consent-box">
+        <input type="checkbox" id="consent-box">
+        <span class="consent-mark" aria-hidden="true"></span>
+        <span id="consent-text"></span>
+      </label>
+      <button type="button" class="consent-link" id="consent-open"></button>
     </div>
 
     <button id="btn-start"  class="btn btn-gold pulse"></button>
     <button id="btn-resume" class="btn btn-ghost hidden" style="margin-top:11px"></button>
     <button id="btn-last"   class="btn btn-ghost hidden" style="margin-top:11px"></button>
-
-    <p class="legal" id="intro-legal"></p>
   </section>
 
   <!-- ==================== ЭКРАН 2 · ВОПРОСЫ ====================
@@ -95,6 +105,16 @@
 <div class="toast" id="toast" role="status" aria-live="polite">
   <div class="toast-icon" id="toast-icon">✨</div>
   <div class="toast-text" id="toast-text"></div>
+</div>
+
+<!-- Текст согласия. Живёт в языковых файлах, поэтому работает и офлайн,
+     и внутри Telegram — отдельная страница не нужна. -->
+<div class="modal hidden" id="modal">
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <h3 class="modal-title" id="modal-title"></h3>
+    <div class="modal-body" id="modal-body"></div>
+    <button type="button" class="btn btn-gold" id="modal-close"></button>
+  </div>
 </div>
 
 <script src="js/config.js"></script>

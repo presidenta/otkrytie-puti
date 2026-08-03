@@ -29,6 +29,10 @@ var state = {
   lang:    CFG.defaultLang,
   name:    '',
   contact: '',
+  tg:      null,   // данные пользователя Telegram, если вход был оттуда
+  tgInitData: '',  // подписанная строка Telegram — для проверки на стороне сервера
+  consent: false,  // отмечено ли согласие на обработку данных
+  consentAt: '',
   qIndex: 0,
   order:  [],   // order[q] = перемешанные НОМЕРА вариантов вопроса q
   picks:  [],   // picks[q] = номера выбранных вариантов по приоритетам
@@ -113,9 +117,8 @@ function applyLanguage(){
 
   $('intro-lead').innerHTML  = u.intro.lead;
   $('intro-note').innerHTML  = u.intro.note;
-  /* Текст о данных должен соответствовать реальности: если сбор включён,
-     участник видит, что ответы уходят организатору. */
-  $('intro-legal').textContent = CFG.submit.url ? u.intro.legalSend : u.intro.legal;
+  $('consent-text').textContent = u.intro.consent;
+  $('consent-open').textContent = u.intro.consentLink;
   $('name-label').textContent  = u.intro.nameLabel;
   elName.placeholder           = u.intro.namePlaceholder;
   $('contact-label').textContent = u.intro.contactLabel;
@@ -139,10 +142,79 @@ function applyLanguage(){
 
   $('timer-label').textContent = u.quiz.timerLabel;
 
+  /* Текст согласия и приветствие Telegram */
+  $('modal-title').textContent = L().agreement.title;
+  $('modal-body').innerHTML = L().agreement.body.map(function(p){ return '<p>' + p + '</p>'; }).join('');
+  $('modal-close').textContent = L().agreement.close;
+  if (state.tg) $('tg-hello').textContent = t(u.intro.tgHello, { user: tgLabel() });
+
   buildLangSwitch();
 
   if (!elQuiz.classList.contains('hidden')) renderQuestion(true);
   if (!elResult.classList.contains('hidden')) renderResult();
+}
+
+/* ============================================================
+   2б. ВХОД ЧЕРЕЗ TELEGRAM (Mini App)
+   ------------------------------------------------------------
+   Если анкету открыли внутри Telegram, приложение само узнаёт,
+   кто её проходит: id, имя и @username приходят от Telegram.
+   Спрашивать контакт больше не нужно.
+
+   Официальный скрипт Telegram подключается ТОЛЬКО внутри Telegram —
+   чтобы обычная страница и офлайн-файл остались без внешних
+   зависимостей и работали без интернета.
+   ============================================================ */
+function inTelegram(){
+  return (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData !== undefined) ||
+         (location.hash || '').indexOf('tgWebAppData') !== -1 ||
+         !!window.TelegramWebviewProxy;
+}
+
+function tgLabel(){
+  if (!state.tg) return '';
+  return state.tg.username ? '@' + state.tg.username
+       : [state.tg.first_name, state.tg.last_name].filter(Boolean).join(' ') || ('id ' + state.tg.id);
+}
+
+/* Данные пользователя из адреса — запасной путь, если скрипт Telegram не загрузился */
+function tgUserFromHash(){
+  try{
+    var m = /tgWebAppData=([^&]+)/.exec(location.hash || '');
+    if (!m) return null;
+    var params = new URLSearchParams(decodeURIComponent(m[1]));
+    var raw = params.get('user');
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+
+function initTelegram(done){
+  if (!inTelegram()) { done(); return; }
+
+  var apply = function(){
+    var W = window.Telegram && window.Telegram.WebApp;
+    var user = (W && W.initDataUnsafe && W.initDataUnsafe.user) || tgUserFromHash();
+    if (user){
+      state.tg = user;
+      state.tgInitData = (W && W.initData) || '';
+      state.name    = [user.first_name, user.last_name].filter(Boolean).join(' ');
+      state.contact = user.username ? '@' + user.username : '';
+    }
+    if (W){
+      try { W.ready(); W.expand(); } catch(e){}
+    }
+    document.body.classList.add('in-telegram');
+    done();
+  };
+
+  if (window.Telegram && window.Telegram.WebApp) { apply(); return; }
+
+  var s = document.createElement('script');
+  s.src = 'https://telegram.org/js/telegram-web-app.js';
+  s.onload = apply;
+  s.onerror = apply;                 /* без скрипта читаем данные из адреса */
+  document.head.appendChild(s);
+  setTimeout(function(){ if (!state.tg) apply(); }, 2500);   /* страховка от зависания */
 }
 
 /* ============================================================
@@ -400,6 +472,8 @@ function saveState(){
   data.lang = state.lang;
   data.name = state.name;
   data.contact = state.contact;
+  data.consent = state.consent;
+  data.consentAt = state.consentAt;
   data.progress = {
     qIndex: state.qIndex,
     order:  state.order,
@@ -774,6 +848,11 @@ function buildPayload(r){
     lang:      state.lang,
     name:      state.name || '',
     contact:   state.contact || '',
+    tgId:      state.tg ? state.tg.id : '',
+    tgUser:    state.tg ? (state.tg.username || '') : '',
+    tgInitData: state.tgInitData || '',
+    consent:   state.consent ? 'да' : '',
+    consentAt: state.consentAt || '',
     lead:      types[r.lead].name,
     leadScore: r.leadScore,
     sub:       types[r.sub].name,
@@ -972,6 +1051,15 @@ function legacyCopy(text){
    10. ЗАПУСК
    ============================================================ */
 function startQuiz(){
+  /* Без согласия анкета не запускается */
+  if (!$('consent-box').checked){
+    toast(U().intro.consentNeed, '📋', 4000);
+    $('consent-box').focus();
+    return;
+  }
+  state.consent   = true;
+  state.consentAt = new Date().toISOString();
+
   state.name    = (elName.value || '').trim().slice(0, 40);
   state.contact = (elContact.value || '').trim().slice(0, 60);
   state.qIndex = 0;
@@ -1002,7 +1090,17 @@ document.addEventListener('keydown', function(e){
   if (n >= 1 && n <= state.order[state.qIndex].length) pick(state.order[state.qIndex][n - 1]);
 });
 
-(function init(){
+/* Окно с текстом согласия */
+$('consent-open').addEventListener('click', function(){ $('modal').classList.remove('hidden'); });
+$('modal-close').addEventListener('click', function(){ $('modal').classList.add('hidden'); });
+$('modal').addEventListener('click', function(e){
+  if (e.target === $('modal')) $('modal').classList.add('hidden');
+});
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape') $('modal').classList.add('hidden');
+});
+
+function boot(){
   var saved = load() || {};
 
   if (saved.lang && window.CONTENT[saved.lang]) state.lang = saved.lang;
@@ -1012,8 +1110,28 @@ document.addEventListener('keydown', function(e){
   if (saved.name) elName.value = saved.name;
   if (saved.contact) elContact.value = saved.contact;
 
-  /* Поле контакта нужно только когда ответы куда-то уходят */
-  if (CFG.submit.url && CFG.submit.askContact) $('contact-field').classList.remove('hidden');
+  /* Согласие, отмеченное в прошлый раз, повторно отмечать не нужно */
+  if (saved.consent){
+    $('consent-box').checked = true;
+    state.consent = true;
+    state.consentAt = saved.consentAt || '';
+  }
+  $('consent-box').addEventListener('change', function(){
+    var d = load() || {};
+    d.consent = this.checked;
+    d.consentAt = this.checked ? new Date().toISOString() : '';
+    store(d);
+  });
+
+  /* Вход через Telegram: имя и @username уже известны, поле контакта прячем */
+  if (state.tg){
+    if (state.name) elName.value = state.name;
+    elContact.value = state.contact;
+    $('contact-field').classList.add('hidden');
+    $('tg-hello').classList.remove('hidden');
+  } else if (!CFG.submit.askContact){
+    $('contact-field').classList.add('hidden');
+  }
 
   /* Если с прошлого раза что-то не ушло — досылаем молча */
   flushQueue(false);
@@ -1048,6 +1166,10 @@ document.addEventListener('keydown', function(e){
   }
 
   applyLanguage();
-})();
+}
+
+/* Сначала выясняем, не открыт ли Mini App внутри Telegram, и только потом
+   запускаем интерфейс — иначе поля успеют отрисоваться без данных пользователя. */
+initTelegram(boot);
 
 })();

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- СОБРАНО build.ps1 03.08.2026 04:37 · исходники: index.html + css/style.css + js/*.js -->
+<!-- СОБРАНО build.ps1 03.08.2026 04:52 · исходники: index.html + css/style.css + js/*.js -->
 <!--
   ============================================================================
   ОТКРЫТИЕ ПУТИ / ВІДКРИТТЯ ШЛЯХУ · Genesis Solar Life
@@ -376,6 +376,83 @@ body::after{
   outline:none; border-color:var(--gold-core);
   box-shadow:0 0 0 3px rgba(212,175,55,.16);
 }
+
+/* ---------- Галочка согласия ---------- */
+.consent{
+  display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px;
+  margin:4px 0 20px;
+}
+.consent-label{
+  display:flex; align-items:center; gap:11px;
+  cursor:pointer; font-size:.93rem; color:var(--text-2);
+  touch-action:manipulation; -webkit-user-select:none; user-select:none;
+}
+.consent-label input{                 /* настоящий чекбокс скрыт, но доступен с клавиатуры */
+  position:absolute; opacity:0; width:0; height:0;
+}
+.consent-mark{
+  flex:0 0 24px; width:24px; height:24px; border-radius:7px;
+  border:1.5px solid #46505F; background:var(--bg-2);
+  position:relative; transition:all .18s ease;
+}
+.consent-mark::after{                 /* галочка */
+  content:""; position:absolute; left:8px; top:3px;
+  width:6px; height:12px; border:solid #211603;
+  border-width:0 2.5px 2.5px 0; transform:rotate(45deg) scale(.4);
+  opacity:0; transition:all .18s cubic-bezier(.34,1.5,.64,1);
+}
+.consent-label input:checked + .consent-mark{
+  border-color:transparent;
+  background:var(--grad-gold); background-size:300% 100%;
+  animation:shimmer 6s linear infinite;
+  box-shadow:0 0 14px rgba(212,175,55,.45);
+}
+.consent-label input:checked + .consent-mark::after{ opacity:1; transform:rotate(45deg) scale(1); }
+.consent-label:hover .consent-mark{ border-color:var(--gold-core); }
+.consent-label input:focus-visible + .consent-mark{ outline:2px solid var(--gold-warm); outline-offset:3px; }
+
+.consent-link{
+  background:none; border:none; padding:0; cursor:pointer;
+  font-family:inherit; font-size:.9rem; color:var(--gold-core);
+  text-decoration:underline; text-underline-offset:3px;
+  touch-action:manipulation;
+}
+.consent-link:hover{ color:var(--gold-light); }
+
+.tg-hello{
+  font-size:.9rem; color:var(--gold-light); margin:-8px 0 16px;
+  padding:11px 14px; border-radius:var(--radius-sm);
+  background:rgba(212,175,55,.08); border:1px solid rgba(212,175,55,.25);
+}
+
+/* ---------- Окно с текстом согласия ---------- */
+.modal{
+  position:fixed; inset:0; z-index:90;
+  display:flex; align-items:center; justify-content:center;
+  padding:calc(18px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom));
+  background:rgba(4,6,10,.82);
+  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  animation:fadeIn .25s ease;
+}
+@keyframes fadeIn{ from{opacity:0} to{opacity:1} }
+.modal-card{
+  width:100%; max-width:640px; max-height:100%;
+  display:flex; flex-direction:column;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius); padding:clamp(20px,4vw,32px);
+  box-shadow:var(--shadow);
+  animation:fadeUp .3s ease both;
+}
+.modal-title{
+  font-size:1.15rem; font-weight:800; margin-bottom:16px; color:var(--gold-light);
+  padding-bottom:12px; border-bottom:1px solid var(--border-soft);
+}
+.modal-body{
+  overflow-y:auto; -webkit-overflow-scrolling:touch;
+  margin-bottom:18px; padding-right:4px;
+}
+.modal-body p{ font-size:.95rem; color:var(--text-2); margin-bottom:12px; }
+.modal-body b{ color:var(--text); }
 
 /* ============================================================
    7. ЭКРАН 2 · ДИАГНОСТИКА
@@ -824,17 +901,27 @@ body::after{
       <input id="user-name" type="text" maxlength="40" autocomplete="name" spellcheck="false">
     </div>
 
-    <!-- Поле показывается, только если включён сбор ответов (config.js → submit) -->
-    <div class="field hidden" id="contact-field">
+    <!-- Скрывается автоматически, если анкета открыта внутри Telegram:
+         там имя пользователя уже известно. -->
+    <div class="field" id="contact-field">
       <label for="user-contact" id="contact-label"></label>
-      <input id="user-contact" type="text" maxlength="60" autocomplete="tel" spellcheck="false">
+      <input id="user-contact" type="text" maxlength="60" autocomplete="username" spellcheck="false">
+    </div>
+
+    <p class="tg-hello hidden" id="tg-hello"></p>
+
+    <div class="consent">
+      <label class="consent-label" for="consent-box">
+        <input type="checkbox" id="consent-box">
+        <span class="consent-mark" aria-hidden="true"></span>
+        <span id="consent-text"></span>
+      </label>
+      <button type="button" class="consent-link" id="consent-open"></button>
     </div>
 
     <button id="btn-start"  class="btn btn-gold pulse"></button>
     <button id="btn-resume" class="btn btn-ghost hidden" style="margin-top:11px"></button>
     <button id="btn-last"   class="btn btn-ghost hidden" style="margin-top:11px"></button>
-
-    <p class="legal" id="intro-legal"></p>
   </section>
 
   <!-- ==================== ЭКРАН 2 · ВОПРОСЫ ====================
@@ -872,6 +959,16 @@ body::after{
 <div class="toast" id="toast" role="status" aria-live="polite">
   <div class="toast-icon" id="toast-icon">✨</div>
   <div class="toast-text" id="toast-text"></div>
+</div>
+
+<!-- Текст согласия. Живёт в языковых файлах, поэтому работает и офлайн,
+     и внутри Telegram — отдельная страница не нужна. -->
+<div class="modal hidden" id="modal">
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <h3 class="modal-title" id="modal-title"></h3>
+    <div class="modal-body" id="modal-body"></div>
+    <button type="button" class="btn btn-gold" id="modal-close"></button>
+  </div>
 </div>
 
 <script>
@@ -1000,17 +1097,38 @@ ui: {
     lead: 'Перед тобой <strong>20 вопросов</strong>. Это не экзамен — здесь нет правильных и неправильных ответов. Есть только твоя правда о себе.',
     note: 'Отключи контролирующий ум. Не анализируй и не просчитывай, «как будет лучше выглядеть». Отвечай по <strong>первому внутреннему импульсу</strong> — именно он знает о тебе больше, чем все твои объяснения. На каждый вопрос даётся 88 секунд: этого достаточно для честности и слишком мало для игры в правильность.',
     badges: ['◆ 20 вопросов', '◆ 88 секунд на вопрос', '◆ Приоритеты 1 · 2 · 3', '◆ 8 векторов личности'],
-    nameLabel:          'Как тебя зовут? (необязательно — имя попадёт в отчёт для наставника)',
-    namePlaceholder:    'Участник',
-    contactLabel:       'Telegram или телефон — чтобы наставник мог с тобой связаться',
-    contactPlaceholder: '@username или +380…',
+    nameLabel:          'Как тебя зовут?',
+    namePlaceholder:    'Имя',
+    contactLabel:       'Твой Telegram',
+    contactPlaceholder: '@username',
     start:  'Начать диагностику',
     resume: '▸ Продолжить с вопроса {n} из {m}',
     last:   '↺ Открыть прошлый результат',
-    /* legal показывается, когда сбор ответов выключен, legalSend — когда включён.
-       Текст выбирается автоматически: участник всегда видит правду. */
-    legal:     'Все данные остаются в этом браузере. Никуда не отправляются, никем не собираются.',
-    legalSend: 'Твои ответы сохранятся в этом браузере и будут переданы организатору проекта — чтобы наставник мог разобрать результат вместе с тобой. Больше никому они не доступны.'
+
+    /* Согласие: короткая строка у галочки и ссылка на полный текст */
+    consent:     'Даю согласие на обработку персональных данных',
+    consentLink: 'Прочитать',
+    consentNeed: 'Отметь согласие на обработку персональных данных',
+    tgHello:     'Ты вошёл(ла) через Telegram как {user} — контакт заполнять не нужно.'
+  },
+
+  /* ============================================================
+     СОГЛАСИЕ НА ОБРАБОТКУ ПЕРСОНАЛЬНЫХ ДАННЫХ
+     Полный текст, который открывается по ссылке у галочки.
+     ============================================================ */
+  agreement: {
+    title: 'Согласие на обработку персональных данных',
+    body: [
+      'Отмечая галочку, ты даёшь согласие организатору проекта Genesis Solar Life на обработку своих персональных данных на условиях ниже.',
+      '<b>Какие данные собираются.</b> Имя, которое ты укажешь. Контакт для связи — Telegram или телефон. Твои ответы на вопросы анкеты и результат диагностики. Дата и время прохождения. Если анкета открыта внутри Telegram — твой Telegram ID и имя пользователя.',
+      '<b>Зачем.</b> Чтобы наставник проекта мог разобрать результат вместе с тобой, предложить подходящую роль в проекте и связаться с тобой по этому поводу.',
+      '<b>Кто видит данные.</b> Только организатор проекта. Третьим лицам они не передаются, не продаются и не используются для рекламы.',
+      '<b>Сколько хранятся.</b> До тех пор, пока ты участвуешь в проекте, либо пока не попросишь их удалить.',
+      '<b>Как отозвать согласие.</b> Напиши организатору в Telegram — твои данные удалят. Отзыв согласия ни на что не влияет и ничем не ограничивает.',
+      '<b>Твои права.</b> Ты можешь узнать, какие данные о тебе хранятся, попросить их исправить или удалить.',
+      'Согласие добровольное. Без него анкету пройти нельзя, потому что результат не для кого будет разбирать.'
+    ],
+    close: 'Понятно'
   },
 
   quiz: {
@@ -1753,15 +1871,36 @@ ui: {
     lead: 'Перед тобою <strong>20 питань</strong>. Це не іспит — тут немає правильних і неправильних відповідей. Є лише твоя правда про себе.',
     note: 'Вимкни контролюючий розум. Не аналізуй і не прораховуй, «як буде краще виглядати». Відповідай за <strong>першим внутрішнім імпульсом</strong> — саме він знає про тебе більше, ніж усі твої пояснення. На кожне питання дається 88 секунд: цього достатньо для чесності й замало для гри в правильність.',
     badges: ['◆ 20 питань', '◆ 88 секунд на питання', '◆ Пріоритети 1 · 2 · 3', '◆ 8 векторів особистості'],
-    nameLabel:          'Як тебе звати? (необов’язково — ім’я потрапить у звіт для наставника)',
-    namePlaceholder:    'Учасник',
-    contactLabel:       'Telegram або телефон — щоб наставник міг з тобою зв’язатися',
-    contactPlaceholder: '@username або +380…',
+    nameLabel:          'Як тебе звати?',
+    namePlaceholder:    'Ім’я',
+    contactLabel:       'Твій Telegram',
+    contactPlaceholder: '@username',
     start:  'Почати діагностику',
     resume: '▸ Продовжити з питання {n} із {m}',
     last:   '↺ Відкрити минулий результат',
-    legal:     'Усі дані залишаються в цьому браузері. Нікуди не надсилаються, ніким не збираються.',
-    legalSend: 'Твої відповіді збережуться в цьому браузері й будуть передані організатору проєкту — щоб наставник міг розібрати результат разом із тобою. Більше нікому вони не доступні.'
+
+    consent:     'Даю згоду на обробку персональних даних',
+    consentLink: 'Прочитати',
+    consentNeed: 'Познач згоду на обробку персональних даних',
+    tgHello:     'Ти увійшов(ла) через Telegram як {user} — контакт заповнювати не потрібно.'
+  },
+
+  /* ============================================================
+     ЗГОДА НА ОБРОБКУ ПЕРСОНАЛЬНИХ ДАНИХ
+     ============================================================ */
+  agreement: {
+    title: 'Згода на обробку персональних даних',
+    body: [
+      'Позначаючи галочку, ти надаєш згоду організатору проєкту Genesis Solar Life на обробку своїх персональних даних на умовах нижче.',
+      '<b>Які дані збираються.</b> Ім’я, яке ти вкажеш. Контакт для зв’язку — Telegram або телефон. Твої відповіді на питання анкети та результат діагностики. Дата й час проходження. Якщо анкету відкрито всередині Telegram — твій Telegram ID та ім’я користувача.',
+      '<b>Навіщо.</b> Щоб наставник проєкту міг розібрати результат разом із тобою, запропонувати відповідну роль у проєкті та зв’язатися з тобою щодо цього.',
+      '<b>Хто бачить дані.</b> Лише організатор проєкту. Третім особам вони не передаються, не продаються і не використовуються для реклами.',
+      '<b>Скільки зберігаються.</b> Доки ти береш участь у проєкті або доки не попросиш їх видалити.',
+      '<b>Як відкликати згоду.</b> Напиши організатору в Telegram — твої дані видалять. Відкликання згоди ні на що не впливає і нічим тебе не обмежує.',
+      '<b>Твої права.</b> Ти можеш дізнатися, які дані про тебе зберігаються, попросити їх виправити або видалити.',
+      'Згода добровільна. Без неї пройти анкету не можна, бо результат не буде кому розбирати.'
+    ],
+    close: 'Зрозуміло'
   },
 
   quiz: {
@@ -2492,6 +2631,10 @@ var state = {
   lang:    CFG.defaultLang,
   name:    '',
   contact: '',
+  tg:      null,   // данные пользователя Telegram, если вход был оттуда
+  tgInitData: '',  // подписанная строка Telegram — для проверки на стороне сервера
+  consent: false,  // отмечено ли согласие на обработку данных
+  consentAt: '',
   qIndex: 0,
   order:  [],   // order[q] = перемешанные НОМЕРА вариантов вопроса q
   picks:  [],   // picks[q] = номера выбранных вариантов по приоритетам
@@ -2576,9 +2719,8 @@ function applyLanguage(){
 
   $('intro-lead').innerHTML  = u.intro.lead;
   $('intro-note').innerHTML  = u.intro.note;
-  /* Текст о данных должен соответствовать реальности: если сбор включён,
-     участник видит, что ответы уходят организатору. */
-  $('intro-legal').textContent = CFG.submit.url ? u.intro.legalSend : u.intro.legal;
+  $('consent-text').textContent = u.intro.consent;
+  $('consent-open').textContent = u.intro.consentLink;
   $('name-label').textContent  = u.intro.nameLabel;
   elName.placeholder           = u.intro.namePlaceholder;
   $('contact-label').textContent = u.intro.contactLabel;
@@ -2602,10 +2744,79 @@ function applyLanguage(){
 
   $('timer-label').textContent = u.quiz.timerLabel;
 
+  /* Текст согласия и приветствие Telegram */
+  $('modal-title').textContent = L().agreement.title;
+  $('modal-body').innerHTML = L().agreement.body.map(function(p){ return '<p>' + p + '</p>'; }).join('');
+  $('modal-close').textContent = L().agreement.close;
+  if (state.tg) $('tg-hello').textContent = t(u.intro.tgHello, { user: tgLabel() });
+
   buildLangSwitch();
 
   if (!elQuiz.classList.contains('hidden')) renderQuestion(true);
   if (!elResult.classList.contains('hidden')) renderResult();
+}
+
+/* ============================================================
+   2б. ВХОД ЧЕРЕЗ TELEGRAM (Mini App)
+   ------------------------------------------------------------
+   Если анкету открыли внутри Telegram, приложение само узнаёт,
+   кто её проходит: id, имя и @username приходят от Telegram.
+   Спрашивать контакт больше не нужно.
+
+   Официальный скрипт Telegram подключается ТОЛЬКО внутри Telegram —
+   чтобы обычная страница и офлайн-файл остались без внешних
+   зависимостей и работали без интернета.
+   ============================================================ */
+function inTelegram(){
+  return (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData !== undefined) ||
+         (location.hash || '').indexOf('tgWebAppData') !== -1 ||
+         !!window.TelegramWebviewProxy;
+}
+
+function tgLabel(){
+  if (!state.tg) return '';
+  return state.tg.username ? '@' + state.tg.username
+       : [state.tg.first_name, state.tg.last_name].filter(Boolean).join(' ') || ('id ' + state.tg.id);
+}
+
+/* Данные пользователя из адреса — запасной путь, если скрипт Telegram не загрузился */
+function tgUserFromHash(){
+  try{
+    var m = /tgWebAppData=([^&]+)/.exec(location.hash || '');
+    if (!m) return null;
+    var params = new URLSearchParams(decodeURIComponent(m[1]));
+    var raw = params.get('user');
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+
+function initTelegram(done){
+  if (!inTelegram()) { done(); return; }
+
+  var apply = function(){
+    var W = window.Telegram && window.Telegram.WebApp;
+    var user = (W && W.initDataUnsafe && W.initDataUnsafe.user) || tgUserFromHash();
+    if (user){
+      state.tg = user;
+      state.tgInitData = (W && W.initData) || '';
+      state.name    = [user.first_name, user.last_name].filter(Boolean).join(' ');
+      state.contact = user.username ? '@' + user.username : '';
+    }
+    if (W){
+      try { W.ready(); W.expand(); } catch(e){}
+    }
+    document.body.classList.add('in-telegram');
+    done();
+  };
+
+  if (window.Telegram && window.Telegram.WebApp) { apply(); return; }
+
+  var s = document.createElement('script');
+  s.src = 'https://telegram.org/js/telegram-web-app.js';
+  s.onload = apply;
+  s.onerror = apply;                 /* без скрипта читаем данные из адреса */
+  document.head.appendChild(s);
+  setTimeout(function(){ if (!state.tg) apply(); }, 2500);   /* страховка от зависания */
 }
 
 /* ============================================================
@@ -2863,6 +3074,8 @@ function saveState(){
   data.lang = state.lang;
   data.name = state.name;
   data.contact = state.contact;
+  data.consent = state.consent;
+  data.consentAt = state.consentAt;
   data.progress = {
     qIndex: state.qIndex,
     order:  state.order,
@@ -3237,6 +3450,11 @@ function buildPayload(r){
     lang:      state.lang,
     name:      state.name || '',
     contact:   state.contact || '',
+    tgId:      state.tg ? state.tg.id : '',
+    tgUser:    state.tg ? (state.tg.username || '') : '',
+    tgInitData: state.tgInitData || '',
+    consent:   state.consent ? 'да' : '',
+    consentAt: state.consentAt || '',
     lead:      types[r.lead].name,
     leadScore: r.leadScore,
     sub:       types[r.sub].name,
@@ -3435,6 +3653,15 @@ function legacyCopy(text){
    10. ЗАПУСК
    ============================================================ */
 function startQuiz(){
+  /* Без согласия анкета не запускается */
+  if (!$('consent-box').checked){
+    toast(U().intro.consentNeed, '📋', 4000);
+    $('consent-box').focus();
+    return;
+  }
+  state.consent   = true;
+  state.consentAt = new Date().toISOString();
+
   state.name    = (elName.value || '').trim().slice(0, 40);
   state.contact = (elContact.value || '').trim().slice(0, 60);
   state.qIndex = 0;
@@ -3465,7 +3692,17 @@ document.addEventListener('keydown', function(e){
   if (n >= 1 && n <= state.order[state.qIndex].length) pick(state.order[state.qIndex][n - 1]);
 });
 
-(function init(){
+/* Окно с текстом согласия */
+$('consent-open').addEventListener('click', function(){ $('modal').classList.remove('hidden'); });
+$('modal-close').addEventListener('click', function(){ $('modal').classList.add('hidden'); });
+$('modal').addEventListener('click', function(e){
+  if (e.target === $('modal')) $('modal').classList.add('hidden');
+});
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape') $('modal').classList.add('hidden');
+});
+
+function boot(){
   var saved = load() || {};
 
   if (saved.lang && window.CONTENT[saved.lang]) state.lang = saved.lang;
@@ -3475,8 +3712,28 @@ document.addEventListener('keydown', function(e){
   if (saved.name) elName.value = saved.name;
   if (saved.contact) elContact.value = saved.contact;
 
-  /* Поле контакта нужно только когда ответы куда-то уходят */
-  if (CFG.submit.url && CFG.submit.askContact) $('contact-field').classList.remove('hidden');
+  /* Согласие, отмеченное в прошлый раз, повторно отмечать не нужно */
+  if (saved.consent){
+    $('consent-box').checked = true;
+    state.consent = true;
+    state.consentAt = saved.consentAt || '';
+  }
+  $('consent-box').addEventListener('change', function(){
+    var d = load() || {};
+    d.consent = this.checked;
+    d.consentAt = this.checked ? new Date().toISOString() : '';
+    store(d);
+  });
+
+  /* Вход через Telegram: имя и @username уже известны, поле контакта прячем */
+  if (state.tg){
+    if (state.name) elName.value = state.name;
+    elContact.value = state.contact;
+    $('contact-field').classList.add('hidden');
+    $('tg-hello').classList.remove('hidden');
+  } else if (!CFG.submit.askContact){
+    $('contact-field').classList.add('hidden');
+  }
 
   /* Если с прошлого раза что-то не ушло — досылаем молча */
   flushQueue(false);
@@ -3511,7 +3768,11 @@ document.addEventListener('keydown', function(e){
   }
 
   applyLanguage();
-})();
+}
+
+/* Сначала выясняем, не открыт ли Mini App внутри Telegram, и только потом
+   запускаем интерфейс — иначе поля успеют отрисоваться без данных пользователя. */
+initTelegram(boot);
 
 })();
 

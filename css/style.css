@@ -352,6 +352,83 @@ body::after{
   box-shadow:0 0 0 3px rgba(212,175,55,.16);
 }
 
+/* ---------- Галочка согласия ---------- */
+.consent{
+  display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px;
+  margin:4px 0 20px;
+}
+.consent-label{
+  display:flex; align-items:center; gap:11px;
+  cursor:pointer; font-size:.93rem; color:var(--text-2);
+  touch-action:manipulation; -webkit-user-select:none; user-select:none;
+}
+.consent-label input{                 /* настоящий чекбокс скрыт, но доступен с клавиатуры */
+  position:absolute; opacity:0; width:0; height:0;
+}
+.consent-mark{
+  flex:0 0 24px; width:24px; height:24px; border-radius:7px;
+  border:1.5px solid #46505F; background:var(--bg-2);
+  position:relative; transition:all .18s ease;
+}
+.consent-mark::after{                 /* галочка */
+  content:""; position:absolute; left:8px; top:3px;
+  width:6px; height:12px; border:solid #211603;
+  border-width:0 2.5px 2.5px 0; transform:rotate(45deg) scale(.4);
+  opacity:0; transition:all .18s cubic-bezier(.34,1.5,.64,1);
+}
+.consent-label input:checked + .consent-mark{
+  border-color:transparent;
+  background:var(--grad-gold); background-size:300% 100%;
+  animation:shimmer 6s linear infinite;
+  box-shadow:0 0 14px rgba(212,175,55,.45);
+}
+.consent-label input:checked + .consent-mark::after{ opacity:1; transform:rotate(45deg) scale(1); }
+.consent-label:hover .consent-mark{ border-color:var(--gold-core); }
+.consent-label input:focus-visible + .consent-mark{ outline:2px solid var(--gold-warm); outline-offset:3px; }
+
+.consent-link{
+  background:none; border:none; padding:0; cursor:pointer;
+  font-family:inherit; font-size:.9rem; color:var(--gold-core);
+  text-decoration:underline; text-underline-offset:3px;
+  touch-action:manipulation;
+}
+.consent-link:hover{ color:var(--gold-light); }
+
+.tg-hello{
+  font-size:.9rem; color:var(--gold-light); margin:-8px 0 16px;
+  padding:11px 14px; border-radius:var(--radius-sm);
+  background:rgba(212,175,55,.08); border:1px solid rgba(212,175,55,.25);
+}
+
+/* ---------- Окно с текстом согласия ---------- */
+.modal{
+  position:fixed; inset:0; z-index:90;
+  display:flex; align-items:center; justify-content:center;
+  padding:calc(18px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom));
+  background:rgba(4,6,10,.82);
+  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  animation:fadeIn .25s ease;
+}
+@keyframes fadeIn{ from{opacity:0} to{opacity:1} }
+.modal-card{
+  width:100%; max-width:640px; max-height:100%;
+  display:flex; flex-direction:column;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius); padding:clamp(20px,4vw,32px);
+  box-shadow:var(--shadow);
+  animation:fadeUp .3s ease both;
+}
+.modal-title{
+  font-size:1.15rem; font-weight:800; margin-bottom:16px; color:var(--gold-light);
+  padding-bottom:12px; border-bottom:1px solid var(--border-soft);
+}
+.modal-body{
+  overflow-y:auto; -webkit-overflow-scrolling:touch;
+  margin-bottom:18px; padding-right:4px;
+}
+.modal-body p{ font-size:.95rem; color:var(--text-2); margin-bottom:12px; }
+.modal-body b{ color:var(--text); }
+
 /* ============================================================
    7. ЭКРАН 2 · ДИАГНОСТИКА
    ============================================================ */
