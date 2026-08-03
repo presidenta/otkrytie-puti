@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- СОБРАНО build.ps1 03.08.2026 04:05 · исходники: index.html + css/style.css + js/*.js -->
+<!-- СОБРАНО build.ps1 03.08.2026 04:37 · исходники: index.html + css/style.css + js/*.js -->
 <!--
   ============================================================================
   ОТКРЫТИЕ ПУТИ / ВІДКРИТТЯ ШЛЯХУ · Genesis Solar Life
@@ -107,18 +107,31 @@ html{
 
 body{
   font-family:var(--font);
+  background:var(--bg);
   color:var(--text);
   line-height:1.55;
   min-height:100vh;
-  padding:24px 14px calc(48px + env(safe-area-inset-bottom));
+  min-height:100dvh;            /* iOS: реальная высота без панелей браузера */
+  padding:
+    calc(24px + env(safe-area-inset-top))
+    calc(14px + env(safe-area-inset-right))
+    calc(48px + env(safe-area-inset-bottom))
+    calc(14px + env(safe-area-inset-left));
   -webkit-font-smoothing:antialiased;
   overflow-x:hidden;
+  overscroll-behavior-y:contain;          /* Android: не срабатывает «потянуть-обновить» */
+  -webkit-tap-highlight-color:transparent; /* убираем синий блик по тапу */
+}
 
-  /* ---- ФАКТУРА: 4 слоя, снизу вверх ----
-     1) ромбовидная сетка (заметная, но не кричащая)
-     2) золотое сияние сверху
-     3) холодная подсветка снизу
-     4) базовый графит                                        */
+/* ---- ФАКТУРА отдельным закреплённым слоем ----
+   Раньше это был background-attachment:fixed на body. На iOS Safari
+   такой фон рвётся при прокрутке и тормозит инерцию, поэтому фактура
+   вынесена в отдельный неподвижный слой под контентом.
+   Слои снизу вверх: ромбовидная сетка, золотое сияние сверху,
+   холодная подсветка снизу, базовый графит.                       */
+body::before{
+  content:"";
+  position:fixed; inset:0; z-index:-2; pointer-events:none;
   background-color:var(--bg);
   background-image:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34' height='60' viewBox='0 0 34 60'%3E%3Cg fill='none' stroke='%23D4AF37' stroke-width='1'%3E%3Cpath stroke-opacity='0.16' d='M17 0 L34 30 L17 60 L0 30 Z'/%3E%3Cpath stroke-opacity='0.07' d='M17 12 L27 30 L17 48 L7 30 Z'/%3E%3C/g%3E%3Ccircle cx='17' cy='30' r='1.1' fill='%23D4AF37' fill-opacity='0.20'/%3E%3C/svg%3E"),
@@ -127,11 +140,10 @@ body{
     linear-gradient(180deg, #0A0D13 0%, #07090E 100%);
   background-repeat:repeat, no-repeat, no-repeat, no-repeat;
   background-size:34px 60px, auto, auto, auto;
-  background-attachment:fixed;  /* фактура не «уезжает» при прокрутке */
 }
 
 /* Виньетка — притемняет края, вытягивает центр вперёд */
-body::before{
+body::after{
   content:"";
   position:fixed; inset:0; z-index:-1; pointer-events:none;
   background:radial-gradient(120% 80% at 50% 40%, transparent 45%, rgba(0,0,0,.55) 100%);
@@ -185,7 +197,8 @@ body::before{
 }
 .lang-btn{
   font-family:inherit; font-size:.76rem; font-weight:800; letter-spacing:1.5px;
-  padding:7px 16px; border-radius:999px; border:none; cursor:pointer;
+  padding:9px 18px; border-radius:999px; border:none; cursor:pointer;
+  min-height:38px; touch-action:manipulation;
   background:transparent; color:var(--muted);
   transition:color .2s ease, background .25s ease, box-shadow .25s ease;
 }
@@ -266,6 +279,7 @@ body::before{
 .btn{
   position:relative; overflow:hidden;
   display:block; width:100%; border:none; cursor:pointer;
+  touch-action:manipulation;   /* убирает задержку 300 мс и зум по двойному тапу */
   font-family:inherit; font-size:1rem; font-weight:800; letter-spacing:.07em;
   text-transform:uppercase; text-align:center;
   padding:18px 22px; border-radius:14px;
@@ -443,6 +457,8 @@ body::before{
 .opt{
   position:relative; overflow:hidden;
   display:flex; align-items:center; gap:15px; width:100%; text-align:left;
+  touch-action:manipulation;
+  -webkit-user-select:none; user-select:none;  /* на телефоне долгий тап не выделяет текст */
   background:linear-gradient(180deg, rgba(255,255,255,.022), transparent), var(--card-2);
   border:1px solid var(--border-soft);
   border-radius:var(--radius-sm);
@@ -680,9 +696,63 @@ body::before{
 @media (min-width:1400px){
   .app{ max-width:960px; }
 }
+
+/* ------------------------------------------------------------
+   ТЕЛЕФОНЫ (до 719 px) — Android и iOS
+   Восемь карточек не помещаются в экран, поэтому:
+   шапка с таймером прилипает сверху, кнопка «Далее» — снизу.
+   Участник не теряет из виду ни оставшееся время, ни кнопку.
+   ------------------------------------------------------------ */
+@media (max-width:719px){
+  .screen{ padding-left:16px; padding-right:16px; }
+
+  .quiz-head{
+    position:sticky;
+    top:calc(-1px + env(safe-area-inset-top));
+    z-index:30;
+    margin:-6px -16px 10px;
+    padding:10px 16px 8px;
+    background:var(--card);
+    box-shadow:0 10px 20px -12px rgba(0,0,0,.9);
+  }
+  .quiz-head::after{        /* мягкая золотая граница снизу */
+    content:""; position:absolute; left:16px; right:16px; bottom:0; height:1px;
+    background:linear-gradient(90deg,transparent,rgba(212,175,55,.45),transparent);
+  }
+  .quiz-top{ margin-bottom:8px; }
+  .timer-digits{ font-size:2.4rem; }
+  .q-counter{ padding-top:4px; }
+  .q-track{ margin-bottom:0; }
+
+  #btn-next{
+    position:sticky;
+    bottom:calc(10px + env(safe-area-inset-bottom));
+    z-index:25;
+    box-shadow:0 8px 26px rgba(212,175,55,.3), 0 14px 34px rgba(0,0,0,.75);
+  }
+
+  .options{ margin-bottom:16px; }
+  .lang-switch{ margin-bottom:12px; }
+  .brand-title{ letter-spacing:.04em; }
+
+  /* уведомление не должно закрывать закреплённую кнопку */
+  .toast{ bottom:calc(84px + env(safe-area-inset-bottom)); }
+}
+
 @media (max-width:360px){
   .slot{ flex-basis:40px; width:40px; height:40px; font-size:1.2rem; }
   .opt{ gap:12px; padding:13px 14px; font-size:.94rem; }
+  .screen{ padding-left:13px; padding-right:13px; }
+  .quiz-head{ margin-left:-13px; margin-right:-13px; padding-left:13px; padding-right:13px; }
+}
+
+/* Телефон в горизонтальном положении: экран низкий, шапку не липнем */
+@media (max-height:520px) and (orientation:landscape){
+  .quiz-head{ position:static; margin:0 0 12px; padding:0; box-shadow:none; }
+  .quiz-head::after{ display:none; }
+  #btn-next{ position:static; }
+  .timer-digits{ font-size:2rem; }
+  .brand{ margin-bottom:14px; }
 }
 
 /* Уважение к системной настройке «меньше движения» */
@@ -700,7 +770,7 @@ body::before{
   @page{ margin:12mm; }
   html, body{ background:#fff !important; color:#111 !important; }
   body{ padding:0; background-image:none !important; }
-  body::before{ display:none !important; }
+  body::before, body::after{ display:none !important; }
   .app{ max-width:100%; }
   .no-print, .btn, .toast, #screen-intro, #screen-quiz, .brand-sub, .divider{ display:none !important; }
 
@@ -754,6 +824,12 @@ body::before{
       <input id="user-name" type="text" maxlength="40" autocomplete="name" spellcheck="false">
     </div>
 
+    <!-- Поле показывается, только если включён сбор ответов (config.js → submit) -->
+    <div class="field hidden" id="contact-field">
+      <label for="user-contact" id="contact-label"></label>
+      <input id="user-contact" type="text" maxlength="60" autocomplete="tel" spellcheck="false">
+    </div>
+
     <button id="btn-start"  class="btn btn-gold pulse"></button>
     <button id="btn-resume" class="btn btn-ghost hidden" style="margin-top:11px"></button>
     <button id="btn-last"   class="btn btn-ghost hidden" style="margin-top:11px"></button>
@@ -765,16 +841,20 @@ body::before{
        По ТЗ: только заголовок вопроса и карточки. Никаких подсказок
        и пояснений рядом с вопросом. -->
   <section id="screen-quiz" class="screen hidden">
-    <div class="quiz-top">
-      <div class="q-counter" id="q-counter"></div>
-      <div class="timer-box">
-        <div class="timer-digits" id="timer-digits">88</div>
-        <div class="timer-label" id="timer-label"></div>
+    <!-- На узких экранах эта шапка прилипает к верху: таймер виден,
+         пока участник прокручивает карточки ответов. -->
+    <div class="quiz-head">
+      <div class="quiz-top">
+        <div class="q-counter" id="q-counter"></div>
+        <div class="timer-box">
+          <div class="timer-digits" id="timer-digits">88</div>
+          <div class="timer-label" id="timer-label"></div>
+        </div>
       </div>
-    </div>
 
-    <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
-    <div class="q-track"><div class="q-fill" id="q-fill"></div></div>
+      <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
+      <div class="q-track"><div class="q-fill" id="q-fill"></div></div>
+    </div>
 
     <h2 class="q-title" id="q-title"></h2>
 
@@ -860,6 +940,19 @@ window.appConfig = {
      соотношения «цена мечты ↔ личный вклад».                            */
   hoursByType: { 1: 1.5, 2: 3, 3: 5.5, 4: 8, 5: 4, 6: 3, 7: 2.5, 8: 8 },
 
+  /* --- Сбор ответов в вашу Google Таблицу -----------------------------------
+     url — адрес веб-приложения Google Apps Script. Как его получить,
+           пошагово описано в файле «СБОР ОТВЕТОВ — инструкция.md».
+           Пока строка пустая, приложение НИЧЕГО никуда не отправляет
+           и честно пишет об этом участнику на стартовом экране.
+     askContact — показывать ли поле контакта рядом с именем.
+     Если отправка не прошла (нет сети), результат кладётся в очередь
+     и уходит при следующем открытии страницы — ответ не теряется.   */
+  submit: {
+    url: '',
+    askContact: true
+  },
+
   /* --- Хранилище браузера --------------------------------------------- */
   storeKey: 'genesis_path_v7'
 };
@@ -907,12 +1000,17 @@ ui: {
     lead: 'Перед тобой <strong>20 вопросов</strong>. Это не экзамен — здесь нет правильных и неправильных ответов. Есть только твоя правда о себе.',
     note: 'Отключи контролирующий ум. Не анализируй и не просчитывай, «как будет лучше выглядеть». Отвечай по <strong>первому внутреннему импульсу</strong> — именно он знает о тебе больше, чем все твои объяснения. На каждый вопрос даётся 88 секунд: этого достаточно для честности и слишком мало для игры в правильность.',
     badges: ['◆ 20 вопросов', '◆ 88 секунд на вопрос', '◆ Приоритеты 1 · 2 · 3', '◆ 8 векторов личности'],
-    nameLabel:       'Как тебя зовут? (необязательно — имя попадёт в отчёт для наставника)',
-    namePlaceholder: 'Участник',
+    nameLabel:          'Как тебя зовут? (необязательно — имя попадёт в отчёт для наставника)',
+    namePlaceholder:    'Участник',
+    contactLabel:       'Telegram или телефон — чтобы наставник мог с тобой связаться',
+    contactPlaceholder: '@username или +380…',
     start:  'Начать диагностику',
     resume: '▸ Продолжить с вопроса {n} из {m}',
     last:   '↺ Открыть прошлый результат',
-    legal:  'Все данные остаются в этом браузере. Никуда не отправляются, никем не собираются.'
+    /* legal показывается, когда сбор ответов выключен, legalSend — когда включён.
+       Текст выбирается автоматически: участник всегда видит правду. */
+    legal:     'Все данные остаются в этом браузере. Никуда не отправляются, никем не собираются.',
+    legalSend: 'Твои ответы сохранятся в этом браузере и будут переданы организатору проекта — чтобы наставник мог разобрать результат вместе с тобой. Больше никому они не доступны.'
   },
 
   quiz: {
@@ -928,7 +1026,9 @@ ui: {
     full:     'Все приоритеты заняты. Кликни по цифре, чтобы освободить место',
     copied:   'Отчёт скопирован — вставь его наставнику в Telegram или SMS',
     copyFail: 'Скопировать автоматически не вышло. Выдели текст вручную',
-    changed:  'Вопросы изменились с прошлого раза — начинаем заново'
+    changed:  'Вопросы изменились с прошлого раза — начинаем заново',
+    sent:     'Ответы отправлены наставнику',
+    queued:   'Нет связи — ответы сохранены и уйдут, когда появится интернет'
   },
 
   result: {
@@ -1653,12 +1753,15 @@ ui: {
     lead: 'Перед тобою <strong>20 питань</strong>. Це не іспит — тут немає правильних і неправильних відповідей. Є лише твоя правда про себе.',
     note: 'Вимкни контролюючий розум. Не аналізуй і не прораховуй, «як буде краще виглядати». Відповідай за <strong>першим внутрішнім імпульсом</strong> — саме він знає про тебе більше, ніж усі твої пояснення. На кожне питання дається 88 секунд: цього достатньо для чесності й замало для гри в правильність.',
     badges: ['◆ 20 питань', '◆ 88 секунд на питання', '◆ Пріоритети 1 · 2 · 3', '◆ 8 векторів особистості'],
-    nameLabel:       'Як тебе звати? (необов’язково — ім’я потрапить у звіт для наставника)',
-    namePlaceholder: 'Учасник',
+    nameLabel:          'Як тебе звати? (необов’язково — ім’я потрапить у звіт для наставника)',
+    namePlaceholder:    'Учасник',
+    contactLabel:       'Telegram або телефон — щоб наставник міг з тобою зв’язатися',
+    contactPlaceholder: '@username або +380…',
     start:  'Почати діагностику',
     resume: '▸ Продовжити з питання {n} із {m}',
     last:   '↺ Відкрити минулий результат',
-    legal:  'Усі дані залишаються в цьому браузері. Нікуди не надсилаються, ніким не збираються.'
+    legal:     'Усі дані залишаються в цьому браузері. Нікуди не надсилаються, ніким не збираються.',
+    legalSend: 'Твої відповіді збережуться в цьому браузері й будуть передані організатору проєкту — щоб наставник міг розібрати результат разом із тобою. Більше нікому вони не доступні.'
   },
 
   quiz: {
@@ -1674,7 +1777,9 @@ ui: {
     full:     'Усі пріоритети зайняті. Клікни по цифрі, щоб звільнити місце',
     copied:   'Звіт скопійовано — встав його наставнику в Telegram або SMS',
     copyFail: 'Скопіювати автоматично не вдалося. Виділи текст вручну',
-    changed:  'Питання змінилися з минулого разу — починаємо спочатку'
+    changed:  'Питання змінилися з минулого разу — починаємо спочатку',
+    sent:     'Відповіді надіслані наставнику',
+    queued:   'Немає зв’язку — відповіді збережені й підуть, щойно з’явиться інтернет'
   },
 
   result: {
@@ -2384,8 +2489,9 @@ questions: [
 var CFG = window.appConfig;
 
 var state = {
-  lang:   CFG.defaultLang,
-  name:   '',
+  lang:    CFG.defaultLang,
+  name:    '',
+  contact: '',
   qIndex: 0,
   order:  [],   // order[q] = перемешанные НОМЕРА вариантов вопроса q
   picks:  [],   // picks[q] = номера выбранных вариантов по приоритетам
@@ -2396,7 +2502,8 @@ var state = {
 
 var $ = function(id){ return document.getElementById(id); };
 var elIntro = $('screen-intro'), elQuiz = $('screen-quiz'), elResult = $('screen-result');
-var elOptions = $('options'), elNext = $('btn-next'), elName = $('user-name');
+var elOptions = $('options'), elNext = $('btn-next');
+var elName = $('user-name'), elContact = $('user-contact');
 var elDigits = $('timer-digits'), elTimerFill = $('timer-fill');
 var elToast = $('toast'), elToastText = $('toast-text'), elToastIcon = $('toast-icon');
 
@@ -2469,9 +2576,13 @@ function applyLanguage(){
 
   $('intro-lead').innerHTML  = u.intro.lead;
   $('intro-note').innerHTML  = u.intro.note;
-  $('intro-legal').textContent = u.intro.legal;
+  /* Текст о данных должен соответствовать реальности: если сбор включён,
+     участник видит, что ответы уходят организатору. */
+  $('intro-legal').textContent = CFG.submit.url ? u.intro.legalSend : u.intro.legal;
   $('name-label').textContent  = u.intro.nameLabel;
   elName.placeholder           = u.intro.namePlaceholder;
+  $('contact-label').textContent = u.intro.contactLabel;
+  elContact.placeholder          = u.intro.contactPlaceholder;
   $('btn-start').textContent   = u.intro.start;
   $('btn-last').textContent    = u.intro.last;
 
@@ -2751,6 +2862,7 @@ function saveState(){
   var data = load() || {};
   data.lang = state.lang;
   data.name = state.name;
+  data.contact = state.contact;
   data.progress = {
     qIndex: state.qIndex,
     order:  state.order,
@@ -2864,6 +2976,7 @@ function finish(){
   saveRun();
   renderResult();
   showScreen(elResult);
+  submitResult(calculate());     // передача организатору, если сбор включён
 }
 
 function renderResult(){
@@ -3090,6 +3203,126 @@ function renderResult(){
 function levelClass(v){ return v >= 65 ? 'lvl-high' : (v >= 40 ? 'lvl-mid' : 'lvl-low'); }
 
 /* ============================================================
+   8б. ПЕРЕДАЧА ОТВЕТОВ ОРГАНИЗАТОРУ
+   ------------------------------------------------------------
+   Сайт статический, своего сервера у него нет. Результат уходит
+   POST-запросом в веб-приложение Google Apps Script, которое пишет
+   строку в вашу приватную Google Таблицу.
+
+   Ответ сервера прочитать нельзя (браузер запрещает читать ответ
+   с чужого домена), но факт ухода запроса виден: если сети нет,
+   промис отклоняется — тогда результат кладётся в очередь и уходит
+   при следующем открытии страницы.
+   ============================================================ */
+function buildPayload(r){
+  var types = T(), out = [];
+
+  /* Все ответы дословно, в порядке вопросов */
+  state.picks.forEach(function(slots, qi){
+    var q = Q()[qi];
+    out.push({
+      id: q.id,
+      picks: slots.map(function(idx){
+        return idx === null ? '' : q.options[idx].text;
+      })
+    });
+  });
+
+  var pu = L().psych;
+  var nameOf = function(bank, ty){ return ty ? pu[bank][ty].title : ''; };
+
+  return {
+    ts:        new Date().toISOString(),
+    date:      r.date,
+    lang:      state.lang,
+    name:      state.name || '',
+    contact:   state.contact || '',
+    lead:      types[r.lead].name,
+    leadScore: r.leadScore,
+    sub:       types[r.sub].name,
+    subScore:  r.subScore,
+    maxScore:  MAX_SCORE,
+    scores:    r.ranking.map(function(x){ return types[x.type].name + ': ' + x.score; }).join(' | '),
+    readiness: r.readiness,
+    needHours: r.needHours,
+    giveHours: r.giveHours,
+    dream1:    r.dream[0],
+    dream2:    r.dream[1],
+    dream3:    r.dream[2],
+    price:     r.price,
+    commit:    r.commit,
+    income:    r.income,
+    state:     nameOf('shadow',   r.trig.shadow),
+    sabotage:  nameOf('sabotage', r.trig.sabotage),
+    coping:    nameOf('pressure', r.trig.pressure),
+    tradeoff:  nameOf('tradeoff', r.trig.tradeoff),
+    answers:   out
+  };
+}
+
+/* Отправка одной записи. Возвращает промис. */
+function postResult(payload){
+  return fetch(CFG.submit.url, {
+    method: 'POST',
+    mode: 'no-cors',
+    /* text/plain — иначе браузер отправит предварительный запрос OPTIONS,
+       который Apps Script не обрабатывает */
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  });
+}
+
+function submitResult(r){
+  if (!CFG.submit.url) return;                 // сбор выключен — молча выходим
+  var payload = buildPayload(r);
+  queuePush(payload);
+  flushQueue(true);
+}
+
+/* Очередь неотправленного живёт в том же хранилище браузера */
+function queuePush(payload){
+  var data = load() || {};
+  data.outbox = (data.outbox || []).concat([payload]).slice(-20);
+  store(data);
+}
+
+function flushQueue(notify){
+  if (!CFG.submit.url) return;
+  var data = load() || {};
+  var box = data.outbox || [];
+  if (!box.length) return;
+
+  var pending = box.slice();
+  var sentAll = true;
+  var done = 0;
+
+  pending.forEach(function(item){
+    postResult(item).then(function(){
+      done++;
+      settle();
+    }, function(){
+      sentAll = false;
+      done++;
+      settle();
+    });
+  });
+
+  /* Названа settle, а не finish, чтобы не путать с finish() —
+     функцией завершения диагностики выше по файлу. */
+  function settle(){
+    if (done < pending.length) return;
+    var fresh = load() || {};
+    if (sentAll){
+      fresh.outbox = [];
+      store(fresh);
+      if (notify) toast(U().toast.sent, '📨', 3500);
+    } else if (notify){
+      toast(U().toast.queued, '📡', 5000);
+    }
+  }
+}
+
+/* ============================================================
    9. КОПИРОВАНИЕ ОТЧЁТА
    ============================================================ */
 function buildReportText(){
@@ -3202,7 +3435,8 @@ function legacyCopy(text){
    10. ЗАПУСК
    ============================================================ */
 function startQuiz(){
-  state.name   = (elName.value || '').trim().slice(0, 40);
+  state.name    = (elName.value || '').trim().slice(0, 40);
+  state.contact = (elContact.value || '').trim().slice(0, 60);
   state.qIndex = 0;
   state.date   = '';
   state.order  = Q().map(function(q){
@@ -3239,6 +3473,13 @@ document.addEventListener('keydown', function(e){
   if (!validateContent()) { /* приложение продолжит работу, ошибки уже в консоли */ }
 
   if (saved.name) elName.value = saved.name;
+  if (saved.contact) elContact.value = saved.contact;
+
+  /* Поле контакта нужно только когда ответы куда-то уходят */
+  if (CFG.submit.url && CFG.submit.askContact) $('contact-field').classList.remove('hidden');
+
+  /* Если с прошлого раза что-то не ушло — досылаем молча */
+  flushQueue(false);
 
   /* Незавершённая диагностика */
   if (saved.progress && progressFits(saved.progress)){

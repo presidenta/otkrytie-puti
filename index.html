@@ -47,6 +47,12 @@
       <input id="user-name" type="text" maxlength="40" autocomplete="name" spellcheck="false">
     </div>
 
+    <!-- Поле показывается, только если включён сбор ответов (config.js → submit) -->
+    <div class="field hidden" id="contact-field">
+      <label for="user-contact" id="contact-label"></label>
+      <input id="user-contact" type="text" maxlength="60" autocomplete="tel" spellcheck="false">
+    </div>
+
     <button id="btn-start"  class="btn btn-gold pulse"></button>
     <button id="btn-resume" class="btn btn-ghost hidden" style="margin-top:11px"></button>
     <button id="btn-last"   class="btn btn-ghost hidden" style="margin-top:11px"></button>
@@ -58,16 +64,20 @@
        По ТЗ: только заголовок вопроса и карточки. Никаких подсказок
        и пояснений рядом с вопросом. -->
   <section id="screen-quiz" class="screen hidden">
-    <div class="quiz-top">
-      <div class="q-counter" id="q-counter"></div>
-      <div class="timer-box">
-        <div class="timer-digits" id="timer-digits">88</div>
-        <div class="timer-label" id="timer-label"></div>
+    <!-- На узких экранах эта шапка прилипает к верху: таймер виден,
+         пока участник прокручивает карточки ответов. -->
+    <div class="quiz-head">
+      <div class="quiz-top">
+        <div class="q-counter" id="q-counter"></div>
+        <div class="timer-box">
+          <div class="timer-digits" id="timer-digits">88</div>
+          <div class="timer-label" id="timer-label"></div>
+        </div>
       </div>
-    </div>
 
-    <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
-    <div class="q-track"><div class="q-fill" id="q-fill"></div></div>
+      <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
+      <div class="q-track"><div class="q-fill" id="q-fill"></div></div>
+    </div>
 
     <h2 class="q-title" id="q-title"></h2>
 

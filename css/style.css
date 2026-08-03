@@ -82,18 +82,31 @@ html{
 
 body{
   font-family:var(--font);
+  background:var(--bg);
   color:var(--text);
   line-height:1.55;
   min-height:100vh;
-  padding:24px 14px calc(48px + env(safe-area-inset-bottom));
+  min-height:100dvh;            /* iOS: реальная высота без панелей браузера */
+  padding:
+    calc(24px + env(safe-area-inset-top))
+    calc(14px + env(safe-area-inset-right))
+    calc(48px + env(safe-area-inset-bottom))
+    calc(14px + env(safe-area-inset-left));
   -webkit-font-smoothing:antialiased;
   overflow-x:hidden;
+  overscroll-behavior-y:contain;          /* Android: не срабатывает «потянуть-обновить» */
+  -webkit-tap-highlight-color:transparent; /* убираем синий блик по тапу */
+}
 
-  /* ---- ФАКТУРА: 4 слоя, снизу вверх ----
-     1) ромбовидная сетка (заметная, но не кричащая)
-     2) золотое сияние сверху
-     3) холодная подсветка снизу
-     4) базовый графит                                        */
+/* ---- ФАКТУРА отдельным закреплённым слоем ----
+   Раньше это был background-attachment:fixed на body. На iOS Safari
+   такой фон рвётся при прокрутке и тормозит инерцию, поэтому фактура
+   вынесена в отдельный неподвижный слой под контентом.
+   Слои снизу вверх: ромбовидная сетка, золотое сияние сверху,
+   холодная подсветка снизу, базовый графит.                       */
+body::before{
+  content:"";
+  position:fixed; inset:0; z-index:-2; pointer-events:none;
   background-color:var(--bg);
   background-image:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34' height='60' viewBox='0 0 34 60'%3E%3Cg fill='none' stroke='%23D4AF37' stroke-width='1'%3E%3Cpath stroke-opacity='0.16' d='M17 0 L34 30 L17 60 L0 30 Z'/%3E%3Cpath stroke-opacity='0.07' d='M17 12 L27 30 L17 48 L7 30 Z'/%3E%3C/g%3E%3Ccircle cx='17' cy='30' r='1.1' fill='%23D4AF37' fill-opacity='0.20'/%3E%3C/svg%3E"),
@@ -102,11 +115,10 @@ body{
     linear-gradient(180deg, #0A0D13 0%, #07090E 100%);
   background-repeat:repeat, no-repeat, no-repeat, no-repeat;
   background-size:34px 60px, auto, auto, auto;
-  background-attachment:fixed;  /* фактура не «уезжает» при прокрутке */
 }
 
 /* Виньетка — притемняет края, вытягивает центр вперёд */
-body::before{
+body::after{
   content:"";
   position:fixed; inset:0; z-index:-1; pointer-events:none;
   background:radial-gradient(120% 80% at 50% 40%, transparent 45%, rgba(0,0,0,.55) 100%);
@@ -160,7 +172,8 @@ body::before{
 }
 .lang-btn{
   font-family:inherit; font-size:.76rem; font-weight:800; letter-spacing:1.5px;
-  padding:7px 16px; border-radius:999px; border:none; cursor:pointer;
+  padding:9px 18px; border-radius:999px; border:none; cursor:pointer;
+  min-height:38px; touch-action:manipulation;
   background:transparent; color:var(--muted);
   transition:color .2s ease, background .25s ease, box-shadow .25s ease;
 }
@@ -241,6 +254,7 @@ body::before{
 .btn{
   position:relative; overflow:hidden;
   display:block; width:100%; border:none; cursor:pointer;
+  touch-action:manipulation;   /* убирает задержку 300 мс и зум по двойному тапу */
   font-family:inherit; font-size:1rem; font-weight:800; letter-spacing:.07em;
   text-transform:uppercase; text-align:center;
   padding:18px 22px; border-radius:14px;
@@ -418,6 +432,8 @@ body::before{
 .opt{
   position:relative; overflow:hidden;
   display:flex; align-items:center; gap:15px; width:100%; text-align:left;
+  touch-action:manipulation;
+  -webkit-user-select:none; user-select:none;  /* на телефоне долгий тап не выделяет текст */
   background:linear-gradient(180deg, rgba(255,255,255,.022), transparent), var(--card-2);
   border:1px solid var(--border-soft);
   border-radius:var(--radius-sm);
@@ -655,9 +671,63 @@ body::before{
 @media (min-width:1400px){
   .app{ max-width:960px; }
 }
+
+/* ------------------------------------------------------------
+   ТЕЛЕФОНЫ (до 719 px) — Android и iOS
+   Восемь карточек не помещаются в экран, поэтому:
+   шапка с таймером прилипает сверху, кнопка «Далее» — снизу.
+   Участник не теряет из виду ни оставшееся время, ни кнопку.
+   ------------------------------------------------------------ */
+@media (max-width:719px){
+  .screen{ padding-left:16px; padding-right:16px; }
+
+  .quiz-head{
+    position:sticky;
+    top:calc(-1px + env(safe-area-inset-top));
+    z-index:30;
+    margin:-6px -16px 10px;
+    padding:10px 16px 8px;
+    background:var(--card);
+    box-shadow:0 10px 20px -12px rgba(0,0,0,.9);
+  }
+  .quiz-head::after{        /* мягкая золотая граница снизу */
+    content:""; position:absolute; left:16px; right:16px; bottom:0; height:1px;
+    background:linear-gradient(90deg,transparent,rgba(212,175,55,.45),transparent);
+  }
+  .quiz-top{ margin-bottom:8px; }
+  .timer-digits{ font-size:2.4rem; }
+  .q-counter{ padding-top:4px; }
+  .q-track{ margin-bottom:0; }
+
+  #btn-next{
+    position:sticky;
+    bottom:calc(10px + env(safe-area-inset-bottom));
+    z-index:25;
+    box-shadow:0 8px 26px rgba(212,175,55,.3), 0 14px 34px rgba(0,0,0,.75);
+  }
+
+  .options{ margin-bottom:16px; }
+  .lang-switch{ margin-bottom:12px; }
+  .brand-title{ letter-spacing:.04em; }
+
+  /* уведомление не должно закрывать закреплённую кнопку */
+  .toast{ bottom:calc(84px + env(safe-area-inset-bottom)); }
+}
+
 @media (max-width:360px){
   .slot{ flex-basis:40px; width:40px; height:40px; font-size:1.2rem; }
   .opt{ gap:12px; padding:13px 14px; font-size:.94rem; }
+  .screen{ padding-left:13px; padding-right:13px; }
+  .quiz-head{ margin-left:-13px; margin-right:-13px; padding-left:13px; padding-right:13px; }
+}
+
+/* Телефон в горизонтальном положении: экран низкий, шапку не липнем */
+@media (max-height:520px) and (orientation:landscape){
+  .quiz-head{ position:static; margin:0 0 12px; padding:0; box-shadow:none; }
+  .quiz-head::after{ display:none; }
+  #btn-next{ position:static; }
+  .timer-digits{ font-size:2rem; }
+  .brand{ margin-bottom:14px; }
 }
 
 /* Уважение к системной настройке «меньше движения» */
@@ -675,7 +745,7 @@ body::before{
   @page{ margin:12mm; }
   html, body{ background:#fff !important; color:#111 !important; }
   body{ padding:0; background-image:none !important; }
-  body::before{ display:none !important; }
+  body::before, body::after{ display:none !important; }
   .app{ max-width:100%; }
   .no-print, .btn, .toast, #screen-intro, #screen-quiz, .brand-sub, .divider{ display:none !important; }
 

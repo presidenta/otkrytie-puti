@@ -26,8 +26,9 @@
 var CFG = window.appConfig;
 
 var state = {
-  lang:   CFG.defaultLang,
-  name:   '',
+  lang:    CFG.defaultLang,
+  name:    '',
+  contact: '',
   qIndex: 0,
   order:  [],   // order[q] = перемешанные НОМЕРА вариантов вопроса q
   picks:  [],   // picks[q] = номера выбранных вариантов по приоритетам
@@ -38,7 +39,8 @@ var state = {
 
 var $ = function(id){ return document.getElementById(id); };
 var elIntro = $('screen-intro'), elQuiz = $('screen-quiz'), elResult = $('screen-result');
-var elOptions = $('options'), elNext = $('btn-next'), elName = $('user-name');
+var elOptions = $('options'), elNext = $('btn-next');
+var elName = $('user-name'), elContact = $('user-contact');
 var elDigits = $('timer-digits'), elTimerFill = $('timer-fill');
 var elToast = $('toast'), elToastText = $('toast-text'), elToastIcon = $('toast-icon');
 
@@ -111,9 +113,13 @@ function applyLanguage(){
 
   $('intro-lead').innerHTML  = u.intro.lead;
   $('intro-note').innerHTML  = u.intro.note;
-  $('intro-legal').textContent = u.intro.legal;
+  /* Текст о данных должен соответствовать реальности: если сбор включён,
+     участник видит, что ответы уходят организатору. */
+  $('intro-legal').textContent = CFG.submit.url ? u.intro.legalSend : u.intro.legal;
   $('name-label').textContent  = u.intro.nameLabel;
   elName.placeholder           = u.intro.namePlaceholder;
+  $('contact-label').textContent = u.intro.contactLabel;
+  elContact.placeholder          = u.intro.contactPlaceholder;
   $('btn-start').textContent   = u.intro.start;
   $('btn-last').textContent    = u.intro.last;
 
@@ -393,6 +399,7 @@ function saveState(){
   var data = load() || {};
   data.lang = state.lang;
   data.name = state.name;
+  data.contact = state.contact;
   data.progress = {
     qIndex: state.qIndex,
     order:  state.order,
@@ -506,6 +513,7 @@ function finish(){
   saveRun();
   renderResult();
   showScreen(elResult);
+  submitResult(calculate());     // передача организатору, если сбор включён
 }
 
 function renderResult(){
@@ -732,6 +740,126 @@ function renderResult(){
 function levelClass(v){ return v >= 65 ? 'lvl-high' : (v >= 40 ? 'lvl-mid' : 'lvl-low'); }
 
 /* ============================================================
+   8б. ПЕРЕДАЧА ОТВЕТОВ ОРГАНИЗАТОРУ
+   ------------------------------------------------------------
+   Сайт статический, своего сервера у него нет. Результат уходит
+   POST-запросом в веб-приложение Google Apps Script, которое пишет
+   строку в вашу приватную Google Таблицу.
+
+   Ответ сервера прочитать нельзя (браузер запрещает читать ответ
+   с чужого домена), но факт ухода запроса виден: если сети нет,
+   промис отклоняется — тогда результат кладётся в очередь и уходит
+   при следующем открытии страницы.
+   ============================================================ */
+function buildPayload(r){
+  var types = T(), out = [];
+
+  /* Все ответы дословно, в порядке вопросов */
+  state.picks.forEach(function(slots, qi){
+    var q = Q()[qi];
+    out.push({
+      id: q.id,
+      picks: slots.map(function(idx){
+        return idx === null ? '' : q.options[idx].text;
+      })
+    });
+  });
+
+  var pu = L().psych;
+  var nameOf = function(bank, ty){ return ty ? pu[bank][ty].title : ''; };
+
+  return {
+    ts:        new Date().toISOString(),
+    date:      r.date,
+    lang:      state.lang,
+    name:      state.name || '',
+    contact:   state.contact || '',
+    lead:      types[r.lead].name,
+    leadScore: r.leadScore,
+    sub:       types[r.sub].name,
+    subScore:  r.subScore,
+    maxScore:  MAX_SCORE,
+    scores:    r.ranking.map(function(x){ return types[x.type].name + ': ' + x.score; }).join(' | '),
+    readiness: r.readiness,
+    needHours: r.needHours,
+    giveHours: r.giveHours,
+    dream1:    r.dream[0],
+    dream2:    r.dream[1],
+    dream3:    r.dream[2],
+    price:     r.price,
+    commit:    r.commit,
+    income:    r.income,
+    state:     nameOf('shadow',   r.trig.shadow),
+    sabotage:  nameOf('sabotage', r.trig.sabotage),
+    coping:    nameOf('pressure', r.trig.pressure),
+    tradeoff:  nameOf('tradeoff', r.trig.tradeoff),
+    answers:   out
+  };
+}
+
+/* Отправка одной записи. Возвращает промис. */
+function postResult(payload){
+  return fetch(CFG.submit.url, {
+    method: 'POST',
+    mode: 'no-cors',
+    /* text/plain — иначе браузер отправит предварительный запрос OPTIONS,
+       который Apps Script не обрабатывает */
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  });
+}
+
+function submitResult(r){
+  if (!CFG.submit.url) return;                 // сбор выключен — молча выходим
+  var payload = buildPayload(r);
+  queuePush(payload);
+  flushQueue(true);
+}
+
+/* Очередь неотправленного живёт в том же хранилище браузера */
+function queuePush(payload){
+  var data = load() || {};
+  data.outbox = (data.outbox || []).concat([payload]).slice(-20);
+  store(data);
+}
+
+function flushQueue(notify){
+  if (!CFG.submit.url) return;
+  var data = load() || {};
+  var box = data.outbox || [];
+  if (!box.length) return;
+
+  var pending = box.slice();
+  var sentAll = true;
+  var done = 0;
+
+  pending.forEach(function(item){
+    postResult(item).then(function(){
+      done++;
+      settle();
+    }, function(){
+      sentAll = false;
+      done++;
+      settle();
+    });
+  });
+
+  /* Названа settle, а не finish, чтобы не путать с finish() —
+     функцией завершения диагностики выше по файлу. */
+  function settle(){
+    if (done < pending.length) return;
+    var fresh = load() || {};
+    if (sentAll){
+      fresh.outbox = [];
+      store(fresh);
+      if (notify) toast(U().toast.sent, '📨', 3500);
+    } else if (notify){
+      toast(U().toast.queued, '📡', 5000);
+    }
+  }
+}
+
+/* ============================================================
    9. КОПИРОВАНИЕ ОТЧЁТА
    ============================================================ */
 function buildReportText(){
@@ -844,7 +972,8 @@ function legacyCopy(text){
    10. ЗАПУСК
    ============================================================ */
 function startQuiz(){
-  state.name   = (elName.value || '').trim().slice(0, 40);
+  state.name    = (elName.value || '').trim().slice(0, 40);
+  state.contact = (elContact.value || '').trim().slice(0, 60);
   state.qIndex = 0;
   state.date   = '';
   state.order  = Q().map(function(q){
@@ -881,6 +1010,13 @@ document.addEventListener('keydown', function(e){
   if (!validateContent()) { /* приложение продолжит работу, ошибки уже в консоли */ }
 
   if (saved.name) elName.value = saved.name;
+  if (saved.contact) elContact.value = saved.contact;
+
+  /* Поле контакта нужно только когда ответы куда-то уходят */
+  if (CFG.submit.url && CFG.submit.askContact) $('contact-field').classList.remove('hidden');
+
+  /* Если с прошлого раза что-то не ушло — досылаем молча */
+  flushQueue(false);
 
   /* Незавершённая диагностика */
   if (saved.progress && progressFits(saved.progress)){
