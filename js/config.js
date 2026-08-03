@@ -71,7 +71,7 @@ window.appConfig = {
      Если отправка не прошла (нет сети), результат кладётся в очередь
      и уходит при следующем открытии страницы — ответ не теряется.   */
   submit: {
-    url: '',
+    url: 'https://script.google.com/macros/s/AKfycbz7HHEhHDEceQRBehBj55yLrSQlPkRc9UygtVW_zOEWnsmoCl_Z2b6SpOK6HPMUW-V4cg/exec',
     askContact: true
   },
 
