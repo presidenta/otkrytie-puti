@@ -1,34 +1,16 @@
 /* ============================================================================
    ПЯТЬ ЯЗЫКОВ ЛЮБВИ — стили, которых нет в общем ../css/style.css
    ----------------------------------------------------------------------------
-   Палитра, кнопки, шкалы, печать и мобильная адаптация берутся из общего
-   файла. Здесь только карточки ответов и крупный процент в результате.
+   Карточки ответов, плашки 1·2·3, таймер, шкалы, печать и мобильная
+   адаптация целиком берутся из общего файла — тест выглядит и ведёт себя
+   так же, как основная анкета. Здесь только крупный процент в результате.
    ============================================================================ */
 
-/* Карточка ответа: без плашки с цифрой, крупнее обычной.
-   Выбор здесь один из пяти, приоритеты не расставляются. */
-.love-opt{
-  min-height:64px;
-  padding:16px 20px;
-  font-size:1.02rem; line-height:1.45;
-}
-.love-opt:hover{
-  border-color:var(--gold-core);
-  background:linear-gradient(135deg, rgba(212,175,55,.10), rgba(212,175,55,.02));
-}
-
-/* Ответ, выбранный раньше, — если участник вернулся назад */
-.love-opt.chosen{
-  border-color:var(--gold-core);
-  background:linear-gradient(135deg, rgba(212,175,55,.14), rgba(212,175,55,.03));
-  box-shadow:0 0 0 1px rgba(212,175,55,.25), 0 8px 26px rgba(212,175,55,.16);
-}
-
-/* Главный язык и его процент */
 .love-main{
   display:flex; align-items:baseline; justify-content:space-between;
   gap:16px; flex-wrap:wrap;
 }
+
 .love-pct{
   font-family:var(--mono); font-weight:800; line-height:1;
   font-size:clamp(2.2rem, 8vw, 3rem);
@@ -37,6 +19,11 @@
   -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
   animation:shimmer 6s linear infinite;
   filter:drop-shadow(0 0 16px rgba(212,175,55,.3));
+}
+
+/* Кнопка «Назад» под закреплённой кнопкой «Далее» на телефоне */
+@media (max-width:719px){
+  #btn-back{ margin-top:14px; }
 }
 
 @media print{

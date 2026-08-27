@@ -2,10 +2,11 @@
 <!--
   ============================================================================
   ПЯТЬ ЯЗЫКОВ ЛЮБВИ · Genesis Solar Life
-  Отдельный тест. Оформление берётся из общего ../css/style.css,
+  Устроен так же, как основная анкета «Открытие Пути»: таймер на вопрос
+  и приоритеты 1 · 2 · 3. Оформление целиком берётся из ../css/style.css,
   своё — только love.css.
 
-    content-ru.js / content-ua.js — весь текст: 20 вопросов по 5 ответов
+    content-ru.js / content-ua.js — 20 вопросов по 5 ответов
     script.js                     — логика
 
   Концепция пяти языков любви — Гэри Чепмен.
@@ -53,12 +54,20 @@
     <p class="legal" id="intro-author"></p>
   </section>
 
-  <!-- ЭКРАН 2 · ВОПРОСЫ -->
+  <!-- ЭКРАН 2 · ВОПРОСЫ
+       На узких экранах шапка с таймером прилипает сверху,
+       кнопка «Далее» — снизу. Правила те же, что в основной анкете. -->
   <section id="screen-quiz" class="screen hidden">
     <div class="quiz-head">
       <div class="quiz-top">
         <div class="q-counter" id="q-counter"></div>
+        <div class="timer-box">
+          <div class="timer-digits" id="timer-digits">60</div>
+          <div class="timer-label" id="timer-label"></div>
+        </div>
       </div>
+
+      <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
       <div class="q-track"><div class="q-fill" id="q-fill"></div></div>
     </div>
 
@@ -66,7 +75,8 @@
 
     <div class="options" id="options"></div>
 
-    <button id="btn-back" class="btn btn-ghost hidden"></button>
+    <button id="btn-next" class="btn btn-gold" disabled></button>
+    <button id="btn-back" class="btn btn-ghost hidden" style="margin-top:11px"></button>
   </section>
 
   <!-- ЭКРАН 3 · РЕЗУЛЬТАТ (собирается в script.js) -->
@@ -75,7 +85,7 @@
 </div>
 
 <div class="toast" id="toast" role="status" aria-live="polite">
-  <div class="toast-icon">💛</div>
+  <div class="toast-icon" id="toast-icon">💛</div>
   <div class="toast-text" id="toast-text"></div>
 </div>
 

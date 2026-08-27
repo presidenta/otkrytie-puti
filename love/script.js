@@ -1,11 +1,15 @@
 /* ============================================================================
    ПЯТЬ ЯЗЫКОВ ЛЮБВИ · Genesis Solar Life
-   script.js — логика теста. Текстов здесь нет, они в content-ru.js / content-ua.js.
+   script.js — логика. Текстов здесь нет, они в content-ru.js / content-ua.js.
    ----------------------------------------------------------------------------
-   Как и в основной анкете, состояние хранит только ЧИСЛА: какой язык выбран
-   в каждом вопросе и в каком порядке показаны ответы. Текст подставляется
-   при отрисовке из активного языка — поэтому переключение языка не сбивает
-   ни прогресс, ни готовый результат.
+   Устроено так же, как основная анкета «Открытие Пути»:
+     • таймер на каждый вопрос, чистые цифры, шкала меняет цвет;
+     • в каждом вопросе отмечаются три ответа с приоритетами 1 · 2 · 3;
+     • баллы 3 / 2 / 1, максимум по одному языку = число вопросов × 3,
+       поэтому главный язык может дойти до 100%.
+
+   Состояние хранит только ЧИСЛА: номера выбранных ответов и порядок показа.
+   Текст подставляется при отрисовке — переключение языка ничего не сбивает.
    ============================================================================ */
 (function () {
 'use strict';
@@ -13,28 +17,41 @@
 var CFG = {
   languages: ['ru', 'ua'],
   defaultLang: 'ru',
-  storeKey: 'genesis_love_v2',
-  submitUrl: ''          // адрес Google Apps Script; пусто — ничего не отправляется
+  storeKey: 'genesis_love_v3',
+
+  timeLimit: 60,     // секунд на вопрос
+  warnAt:    30,     // с этой секунды шкала жёлтая
+  dangerAt:  10,     // с этой секунды красная
+  weights:   [3, 2, 1],
+  picks:     3,      // сколько ответов отмечает участник
+
+  submitUrl: ''      // адрес Google Apps Script; пусто — ничего не отправляется
 };
 
 var state = {
   lang:  CFG.defaultLang,
   name:  '',
   index: 0,
-  picks: [],   // picks[i] = номер выбранного языка 1–5, либо null
+  picks: [],   // picks[i] = [номер ответа|null] по приоритетам
   order: [],   // order[i] = порядок показа ответов вопроса i
+  tick:  null,
+  left:  CFG.timeLimit,
   date:  ''
 };
 
 var $ = function (id) { return document.getElementById(id); };
 var elIntro = $('screen-intro'), elQuiz = $('screen-quiz'), elResult = $('screen-result');
-var elName = $('user-name'), elToast = $('toast'), elToastText = $('toast-text');
+var elName = $('user-name'), elToast = $('toast'), elToastText = $('toast-text'), elToastIcon = $('toast-icon');
+var elOptions = $('options'), elNext = $('btn-next');
+var elDigits = $('timer-digits'), elTimerFill = $('timer-fill');
 
 function L()  { return window.LOVE[state.lang]; }
 function U()  { return L().ui; }
 function QS() { return L().questions; }
 function LG() { return L().langs; }
-var TOTAL = 20;   // уточняется при загрузке
+
+var TOTAL = 20;      // уточняется при загрузке
+var MAX_SCORE = 60;  // максимум по одному языку
 
 /* ============================================================
    Утилиты
@@ -71,8 +88,9 @@ function today() {
 }
 
 var toastTimer = null;
-function toast(text, ms) {
+function toast(text, icon, ms) {
   elToastText.textContent = text;
+  elToastIcon.textContent = icon || '💛';
   elToast.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(function () { elToast.classList.remove('show'); }, ms || 4000);
@@ -93,6 +111,7 @@ function validate() {
   if (!base) { console.error('Нет языкового пакета ' + CFG.defaultLang); return false; }
 
   TOTAL = base.questions.length;
+  MAX_SCORE = TOTAL * CFG.weights[0];
 
   CFG.languages.forEach(function (code) {
     var pack = window.LOVE[code];
@@ -118,13 +137,15 @@ function validate() {
     for (var m = 1; m <= 5; m++) if (!pack.langs[m]) problems.push(code + ': нет описания языка ' + m);
   });
 
+  if (CFG.picks > 5) problems.push('Нельзя отметить ' + CFG.picks + ' ответов из 5');
+
   if (problems.length) {
     console.error('%c[Пять языков любви] Проблемы в контенте:', 'color:#FF4D4D;font-weight:bold');
     problems.forEach(function (p) { console.error('  • ' + p); });
     return false;
   }
   console.log('%c[Пять языков любви] Контент в порядке: ' + TOTAL +
-              ' вопросов, по 5 ответов, максимум одного языка — 100%.', 'color:#D4AF37');
+              ' вопросов, максимум по языку ' + MAX_SCORE + ' баллов.', 'color:#D4AF37');
   return true;
 }
 
@@ -167,6 +188,7 @@ function applyLanguage() {
   $('btn-last').textContent     = u.intro.last;
   $('intro-author').textContent = u.intro.author;
   $('btn-back').textContent     = u.quiz.back;
+  $('timer-label').textContent  = u.quiz.timerLabel;
 
   var badges = $('intro-badges');
   badges.innerHTML = '';
@@ -183,14 +205,53 @@ function applyLanguage() {
   }
 
   buildLangSwitch();
-  if (!elQuiz.classList.contains('hidden')) renderQuestion();
+  if (!elQuiz.classList.contains('hidden')) renderQuestion(true);
   if (!elResult.classList.contains('hidden')) renderResult();
 }
 
 /* ============================================================
-   Экран вопроса: сам вопрос и пять ответов
+   Таймер
    ============================================================ */
-function renderQuestion() {
+function startTimer() {
+  stopTimer();
+  state.left = CFG.timeLimit;
+  paintTimer();
+  resumeTimer();
+}
+
+function resumeTimer() {
+  if (state.tick || state.left <= 0) return;
+  state.tick = setInterval(function () {
+    state.left--;
+    paintTimer();
+    if (state.left <= 0) {
+      stopTimer();
+      if (isComplete()) nextQuestion();
+      else toast(U().toast.timeout, '🕊', 5000);
+    }
+  }, 1000);
+}
+
+function stopTimer() { if (state.tick) { clearInterval(state.tick); state.tick = null; } }
+
+function paintTimer() {
+  var left = Math.max(0, state.left);
+  elDigits.textContent = left;
+  elTimerFill.style.width = (left / CFG.timeLimit * 100) + '%';
+  elQuiz.classList.toggle('state-warn',   left <= CFG.warnAt && left > CFG.dangerAt);
+  elQuiz.classList.toggle('state-danger', left <= CFG.dangerAt);
+}
+
+document.addEventListener('visibilitychange', function () {
+  if (elQuiz.classList.contains('hidden')) return;
+  if (document.hidden) stopTimer();
+  else { paintTimer(); resumeTimer(); }
+});
+
+/* ============================================================
+   Экран вопроса
+   ============================================================ */
+function renderQuestion(keepTimer) {
   var i = state.index, qu = QS()[i], u = U();
 
   $('q-counter').textContent = t(u.quiz.counter, { n: i + 1, m: TOTAL });
@@ -198,34 +259,77 @@ function renderQuestion() {
   $('q-title').textContent = qu.q;
   $('btn-back').classList.toggle('hidden', i === 0);
 
-  var box = $('options');
-  box.innerHTML = '';
+  elOptions.innerHTML = '';
   state.order[i].forEach(function (optIdx) {
-    var opt = qu.o[optIdx];
     var card = document.createElement('div');
-    card.className = 'opt love-opt' + (state.picks[i] === opt.k ? ' chosen' : '');
+    card.className = 'opt';
     card.setAttribute('role', 'button');
     card.setAttribute('tabindex', '0');
-    card.innerHTML = '<div class="opt-text">' + esc(opt.t) + '</div>';
-    var choose = function () { pick(opt.k); };
-    card.addEventListener('click', choose);
+    card.dataset.opt = optIdx;
+    card.innerHTML = '<div class="slot"></div><div class="opt-text">' + esc(qu.o[optIdx].t) + '</div>';
+    card.addEventListener('click', function () { pick(optIdx); });
     card.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose(); }
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(optIdx); }
     });
-    box.appendChild(card);
+    elOptions.appendChild(card);
   });
 
-  box.classList.remove('swap');
-  void box.offsetWidth;
-  box.classList.add('swap');
+  elOptions.classList.remove('swap');
+  void elOptions.offsetWidth;
+  elOptions.classList.add('swap');
+
+  paintPicks();
+  if (!keepTimer) startTimer();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function pick(k) {
-  state.picks[state.index] = k;
+/* Клик по ответу: 1 → 2 → 3, повторный клик снимает именно эту цифру */
+function pick(optIdx) {
+  var slots = state.picks[state.index];
+  var at = slots.indexOf(optIdx);
+
+  if (at !== -1) {
+    slots[at] = null;
+  } else {
+    var free = slots.indexOf(null);
+    if (free === -1) { toast(U().toast.full, '↺', 2600); return; }
+    slots[free] = optIdx;
+  }
+  paintPicks();
   save();
+}
+
+function paintPicks() {
+  var slots = state.picks[state.index];
+  var cards = elOptions.querySelectorAll('.opt');
+
+  Array.prototype.forEach.call(cards, function (card) {
+    var optIdx = +card.dataset.opt;
+    var rank = slots.indexOf(optIdx) + 1;
+    var slot = card.querySelector('.slot');
+    if (rank) { card.dataset.rank = rank; slot.textContent = rank; }
+    else { delete card.dataset.rank; slot.textContent = ''; }
+  });
+
+  var done = slots.filter(function (v) { return v !== null; }).length;
+  var last = state.index === TOTAL - 1;
+  var u = U();
+
+  elNext.disabled = done !== CFG.picks;
+  elNext.textContent = done === CFG.picks
+    ? (last ? u.quiz.finish : u.quiz.next)
+    : t(u.quiz.picked, { n: done, m: CFG.picks });
+}
+
+function isComplete() {
+  return state.picks[state.index].every(function (v) { return v !== null; });
+}
+
+function nextQuestion() {
+  stopTimer();
   if (state.index + 1 < TOTAL) {
     state.index++;
+    save();
     renderQuestion();
   } else {
     finish();
@@ -234,6 +338,7 @@ function pick(k) {
 
 function back() {
   if (state.index === 0) return;
+  stopTimer();
   state.index--;
   save();
   renderQuestion();
@@ -260,14 +365,21 @@ function saveRun() {
 }
 
 /* ============================================================
-   Расчёт. Максимум одного языка — все 20 ответов, то есть 100%.
+   Расчёт: 1 место = 3 балла, 2 = 2, 3 = 1.
+   Максимум по языку = число вопросов × 3, то есть 100%.
    ============================================================ */
 function calculate() {
   var scores = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-  state.picks.forEach(function (k) { if (k) scores[k]++; });
+
+  state.picks.forEach(function (slots, qi) {
+    slots.forEach(function (optIdx, slotPos) {
+      if (optIdx === null || optIdx === undefined) return;
+      scores[QS()[qi].o[optIdx].k] += CFG.weights[slotPos];
+    });
+  });
 
   var ranking = Object.keys(scores).map(function (k) {
-    return { k: +k, n: scores[k], pct: Math.round(scores[k] / TOTAL * 100) };
+    return { k: +k, n: scores[k], pct: Math.round(scores[k] / MAX_SCORE * 100) };
   }).sort(function (a, b) { return b.n - a.n || a.k - b.k; });
 
   return {
@@ -277,7 +389,7 @@ function calculate() {
     main: ranking[0],
     second: ranking[1],
     tie: ranking[0].n === ranking[1].n,
-    flat: (ranking[0].n - ranking[4].n) <= 2
+    flat: (ranking[0].n - ranking[4].n) <= Math.round(MAX_SCORE * 0.12)
   };
 }
 
@@ -285,6 +397,7 @@ function calculate() {
    Результат
    ============================================================ */
 function finish() {
+  stopTimer();
   state.date = today();
   saveRun();
   renderResult();
@@ -300,7 +413,7 @@ function renderResult() {
     var cls = idx === 0 ? ' top' : (idx === 1 ? ' second' : '');
     return '<div class="bar-row' + cls + '">' +
              '<div class="bar-name">' + esc(langs[row.k].name) + '</div>' +
-             '<div class="bar-val">' + row.pct + '% · ' + esc(t(u.ofPicks, { n: row.n, m: TOTAL })) + '</div>' +
+             '<div class="bar-val">' + row.pct + '% · ' + esc(t(u.ofPicks, { n: row.n, m: MAX_SCORE })) + '</div>' +
              '<div class="bar-track"><div class="bar-fill" data-w="' + row.pct + '"></div></div>' +
            '</div>';
   }).join('');
@@ -326,7 +439,7 @@ function renderResult() {
         '<div class="vector-name shimmer-text">' + esc(M.name) + '</div>' +
         '<div class="love-pct">' + r.main.pct + '%</div>' +
       '</div>' +
-      '<div class="vector-score">' + esc(M.tagline) + ' · ' + esc(t(u.ofPicks, { n: r.main.n, m: TOTAL })) + '</div>' +
+      '<div class="vector-score">' + esc(M.tagline) + ' · ' + esc(t(u.ofPicks, { n: r.main.n, m: MAX_SCORE })) + '</div>' +
       '<p class="vector-desc">' + esc(M.desc) + '</p>' +
       (note ? '<div class="spacer-s"></div>' + note : '') +
       '<div class="spacer-s"></div>' +
@@ -385,7 +498,7 @@ function buildReport() {
     t(R.date, { date: r.date }),
     line,
     '',
-    t(R.main, { name: M.name, pct: r.main.pct, n: r.main.n, m: TOTAL }),
+    t(R.main, { name: M.name, pct: r.main.pct, n: r.main.n, m: MAX_SCORE }),
     t(R.second, { name: S.name, pct: r.second.pct }),
     '',
     R.all
@@ -401,8 +514,8 @@ function buildReport() {
 
 function copyReport() {
   var text = buildReport();
-  var ok = function () { toast(U().toast.copied, 3500); };
-  var no = function () { toast(U().toast.copyFail, 5000); };
+  var ok = function () { toast(U().toast.copied, '✅', 3500); };
+  var no = function () { toast(U().toast.copyFail, '⚠️', 5000); };
   if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(text).then(ok, function () { legacyCopy(text) ? ok() : no(); });
   } else {
@@ -459,7 +572,9 @@ function startTest() {
   state.picks = [];
   state.order = [];
   for (var i = 0; i < TOTAL; i++) {
-    state.picks.push(null);
+    var slots = [], j;
+    for (j = 0; j < CFG.picks; j++) slots.push(null);
+    state.picks.push(slots);
     state.order.push(shuffle([0, 1, 2, 3, 4]));   // ответы перемешиваются
   }
   save();
@@ -468,17 +583,17 @@ function startTest() {
   renderQuestion();
 }
 
+elNext.addEventListener('click', function () { if (isComplete()) nextQuestion(); });
 $('btn-start').addEventListener('click', startTest);
 $('btn-back').addEventListener('click', back);
 elName.addEventListener('keydown', function (e) { if (e.key === 'Enter') startTest(); });
 
-/* Клавиши 1–5 выбирают ответ по порядку на экране */
+/* Клавиши 1–5 отмечают ответ по порядку на экране */
 document.addEventListener('keydown', function (e) {
   if (elQuiz.classList.contains('hidden')) return;
   if (e.target && e.target.tagName === 'INPUT') return;
   var n = parseInt(e.key, 10);
-  var cards = $('options').querySelectorAll('.love-opt');
-  if (n >= 1 && n <= 5 && cards[n - 1]) cards[n - 1].click();
+  if (n >= 1 && n <= 5) pick(state.order[state.index][n - 1]);
 });
 
 (function init() {
@@ -488,7 +603,8 @@ document.addEventListener('keydown', function (e) {
   if (saved.name) elName.value = saved.name;
 
   var p = saved.progress;
-  if (p && p.picks && p.picks.length === TOTAL && p.order && p.order.length === TOTAL) {
+  if (p && p.picks && p.picks.length === TOTAL && p.order && p.order.length === TOTAL &&
+      p.picks[0] && p.picks[0].length === CFG.picks) {
     var btn = $('btn-resume');
     btn.classList.remove('hidden');
     state.index = p.index;
