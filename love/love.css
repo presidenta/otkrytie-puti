@@ -1,0 +1,84 @@
+/* ============================================================================
+   ПЯТЬ ЯЗЫКОВ ЛЮБВИ — стили, которых нет в общем ../css/style.css
+   ----------------------------------------------------------------------------
+   Всё остальное (палитра, кнопки, шкалы, печать, мобильная адаптация)
+   берётся из общего файла. Здесь только то, что специфично для выбора
+   из двух утверждений.
+   ============================================================================ */
+
+.pair-hint{
+  font-size:.82rem; letter-spacing:2.5px; text-transform:uppercase;
+  color:var(--muted); font-weight:800; text-align:center;
+  margin:22px 0 16px;
+}
+
+.pair{ display:flex; flex-direction:column; gap:12px; margin-bottom:22px; }
+.pair.swap{ animation:swapIn .35s ease both; }
+
+/* Карточка утверждения: крупнее обычной, текст по центру,
+   плашки с цифрой нет — выбор здесь один из двух. */
+.pair-card{
+  min-height:104px;
+  justify-content:center;
+  padding:20px 22px;
+  font-size:1.04rem; line-height:1.5;
+  text-align:center;
+  transition:border-color .18s ease, background .18s ease, transform .12s ease, box-shadow .25s ease;
+}
+.pair-card:hover{
+  border-color:var(--gold-core);
+  background:linear-gradient(135deg, rgba(212,175,55,.10), rgba(212,175,55,.02));
+  transform:translateY(-2px);
+}
+.pair-card:active{ transform:translateY(0) scale(.995); }
+
+/* Выбранный ранее вариант — если участник вернулся назад */
+.pair-card.chosen{
+  border-color:var(--gold-core);
+  background:linear-gradient(135deg, rgba(212,175,55,.14), rgba(212,175,55,.03));
+  box-shadow:0 0 0 1px rgba(212,175,55,.25), 0 8px 26px rgba(212,175,55,.16);
+}
+
+.pair-text{ width:100%; }
+
+/* Разделитель «или» между карточками */
+.pair-card + .pair-card{ position:relative; margin-top:10px; }
+.pair-card + .pair-card::before{
+  content:""; position:absolute; left:50%; top:-16px;
+  width:7px; height:7px; margin-left:-3.5px; transform:rotate(45deg);
+  background:var(--grad-gold); background-size:300% 100%;
+  animation:shimmer 7s linear infinite;
+  opacity:.75;
+}
+
+/* Главный язык и его процент */
+.love-main{
+  display:flex; align-items:baseline; justify-content:space-between;
+  gap:16px; flex-wrap:wrap;
+}
+.love-pct{
+  font-family:var(--mono); font-weight:800; line-height:1;
+  font-size:clamp(2.2rem, 8vw, 3rem);
+  font-variant-numeric:tabular-nums;
+  background:var(--grad-gold); background-size:300% 100%;
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  animation:shimmer 6s linear infinite;
+  filter:drop-shadow(0 0 16px rgba(212,175,55,.3));
+}
+
+@media (min-width:720px){
+  .pair{ flex-direction:row; }
+  .pair .pair-card{ flex:1; }
+  .pair-card + .pair-card{ margin-top:0; }
+  .pair-card + .pair-card::before{
+    left:-11px; top:50%; margin-left:0; margin-top:-3.5px;
+  }
+}
+
+@media print{
+  .pair-hint, .pair, #btn-back{ display:none !important; }
+  .love-pct{
+    -webkit-text-fill-color:#8A6417 !important; color:#8A6417 !important;
+    background:none !important; animation:none !important; filter:none !important;
+  }
+}
