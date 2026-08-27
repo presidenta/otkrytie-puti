@@ -2,14 +2,14 @@
 <!--
   ============================================================================
   ПЯТЬ ЯЗЫКОВ ЛЮБВИ · Genesis Solar Life
-  Отдельный тест. Оформление берётся из общего файла ../css/style.css,
-  своё — только love.css (карточки пары).
+  Отдельный тест. Оформление берётся из общего ../css/style.css,
+  своё — только love.css.
 
-    content-ru.js / content-ua.js — весь текст, 30 пар утверждений
+    content-ru.js / content-ua.js — весь текст: 20 вопросов по 5 ответов
     script.js                     — логика
 
   Концепция пяти языков любви — Гэри Чепмен.
-  Формулировки утверждений оригинальные.
+  Формулировки вопросов оригинальные.
   ============================================================================
 -->
 <html lang="ru">
@@ -53,18 +53,18 @@
     <p class="legal" id="intro-author"></p>
   </section>
 
-  <!-- ЭКРАН 2 · ПАРЫ -->
+  <!-- ЭКРАН 2 · ВОПРОСЫ -->
   <section id="screen-quiz" class="screen hidden">
     <div class="quiz-head">
       <div class="quiz-top">
-        <div class="q-counter" id="pair-counter"></div>
+        <div class="q-counter" id="q-counter"></div>
       </div>
-      <div class="q-track"><div class="q-fill" id="pair-fill"></div></div>
+      <div class="q-track"><div class="q-fill" id="q-fill"></div></div>
     </div>
 
-    <h2 class="pair-hint" id="pair-hint"></h2>
+    <h2 class="q-title" id="q-title"></h2>
 
-    <div class="pair" id="pair"></div>
+    <div class="options" id="options"></div>
 
     <button id="btn-back" class="btn btn-ghost hidden"></button>
   </section>

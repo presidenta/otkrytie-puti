@@ -3,8 +3,8 @@
    script.js — логика теста. Текстов здесь нет, они в content-ru.js / content-ua.js.
    ----------------------------------------------------------------------------
    Как и в основной анкете, состояние хранит только ЧИСЛА: какой язык выбран
-   в каждой паре и какой стороной показана пара. Текст подставляется при
-   отрисовке из активного языка — поэтому переключение языка не сбивает
+   в каждом вопросе и в каком порядке показаны ответы. Текст подставляется
+   при отрисовке из активного языка — поэтому переключение языка не сбивает
    ни прогресс, ни готовый результат.
    ============================================================================ */
 (function () {
@@ -13,7 +13,7 @@
 var CFG = {
   languages: ['ru', 'ua'],
   defaultLang: 'ru',
-  storeKey: 'genesis_love_v1',
+  storeKey: 'genesis_love_v2',
   submitUrl: ''          // адрес Google Apps Script; пусто — ничего не отправляется
 };
 
@@ -22,7 +22,7 @@ var state = {
   name:  '',
   index: 0,
   picks: [],   // picks[i] = номер выбранного языка 1–5, либо null
-  sides: [],   // sides[i] = true, если пара показана перевёрнутой
+  order: [],   // order[i] = порядок показа ответов вопроса i
   date:  ''
 };
 
@@ -32,9 +32,9 @@ var elName = $('user-name'), elToast = $('toast'), elToastText = $('toast-text')
 
 function L()  { return window.LOVE[state.lang]; }
 function U()  { return L().ui; }
-function IT() { return L().items; }
+function QS() { return L().questions; }
 function LG() { return L().langs; }
-var TOTAL = 30;   // проверяется при загрузке
+var TOTAL = 20;   // уточняется при загрузке
 
 /* ============================================================
    Утилиты
@@ -51,6 +51,15 @@ function esc(s) {
   return String(s).replace(/[&<>"']/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
   });
+}
+
+function shuffle(arr) {                       // Fisher–Yates
+  var a = arr.slice(), i, j, tmp;
+  for (i = a.length - 1; i > 0; i--) {
+    j = Math.floor(Math.random() * (i + 1));
+    tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+  }
+  return a;
 }
 
 function load()   { try { return JSON.parse(localStorage.getItem(CFG.storeKey)); } catch (e) { return null; } }
@@ -83,38 +92,30 @@ function validate() {
   var problems = [], base = window.LOVE[CFG.defaultLang];
   if (!base) { console.error('Нет языкового пакета ' + CFG.defaultLang); return false; }
 
-  TOTAL = base.items.length;
+  TOTAL = base.questions.length;
 
   CFG.languages.forEach(function (code) {
     var pack = window.LOVE[code];
     if (!pack) { problems.push('Не подключён язык: ' + code); return; }
-    if (pack.items.length !== base.items.length) {
-      problems.push(code + ': пар ' + pack.items.length + ', а должно быть ' + base.items.length);
+    if (pack.questions.length !== base.questions.length) {
+      problems.push(code + ': вопросов ' + pack.questions.length + ', а должно быть ' + base.questions.length);
       return;
     }
-    pack.items.forEach(function (it, i) {
-      var b = base.items[i], where = code + ', пара ' + (i + 1);
-      if (!it.a.t || !it.b.t) problems.push(where + ': пустое утверждение');
-      if (it.a.k !== b.a.k || it.b.k !== b.b.k) problems.push(where + ': языки не совпадают с ' + CFG.defaultLang);
-      if (it.a.k === it.b.k) problems.push(where + ': оба утверждения об одном языке');
-    });
-    for (var n = 1; n <= 5; n++) if (!pack.langs[n]) problems.push(code + ': нет описания языка ' + n);
-  });
+    pack.questions.forEach(function (qu, i) {
+      var b = base.questions[i], where = code + ', вопрос ' + (i + 1);
+      if (!qu.q) problems.push(where + ': пустой текст вопроса');
+      if (qu.o.length !== 5) { problems.push(where + ': ответов ' + qu.o.length + ', а должно быть 5'); return; }
 
-  /* Сбалансированность: каждый язык ровно 12 раз, каждое сочетание ровно 3 раза */
-  var count = {}, combo = {};
-  base.items.forEach(function (it) {
-    count[it.a.k] = (count[it.a.k] || 0) + 1;
-    count[it.b.k] = (count[it.b.k] || 0) + 1;
-    var key = Math.min(it.a.k, it.b.k) + '-' + Math.max(it.a.k, it.b.k);
-    combo[key] = (combo[key] || 0) + 1;
-  });
-  for (var k = 1; k <= 5; k++) {
-    if (count[k] !== base.items.length * 2 / 5)
-      problems.push('Язык ' + k + ' встречается ' + count[k] + ' раз вместо ' + (base.items.length * 2 / 5));
-  }
-  Object.keys(combo).forEach(function (key) {
-    if (combo[key] !== 3) problems.push('Сочетание ' + key + ' встречается ' + combo[key] + ' раз вместо 3');
+      var seen = {};
+      qu.o.forEach(function (opt, j) {
+        if (!opt.t) problems.push(where + ', ответ ' + (j + 1) + ': пустой текст');
+        if (opt.k !== b.o[j].k) problems.push(where + ', ответ ' + (j + 1) + ': язык не совпадает с ' + CFG.defaultLang);
+        if (seen[opt.k]) problems.push(where + ': язык ' + opt.k + ' встречается дважды');
+        seen[opt.k] = true;
+      });
+      for (var n = 1; n <= 5; n++) if (!seen[n]) problems.push(where + ': нет ответа для языка ' + n);
+    });
+    for (var m = 1; m <= 5; m++) if (!pack.langs[m]) problems.push(code + ': нет описания языка ' + m);
   });
 
   if (problems.length) {
@@ -123,7 +124,7 @@ function validate() {
     return false;
   }
   console.log('%c[Пять языков любви] Контент в порядке: ' + TOTAL +
-              ' пар, каждый язык по ' + (TOTAL * 2 / 5) + ' раз.', 'color:#D4AF37');
+              ' вопросов, по 5 ответов, максимум одного языка — 100%.', 'color:#D4AF37');
   return true;
 }
 
@@ -165,7 +166,6 @@ function applyLanguage() {
   $('btn-start').textContent    = u.intro.start;
   $('btn-last').textContent     = u.intro.last;
   $('intro-author').textContent = u.intro.author;
-  $('pair-hint').textContent    = u.quiz.hint;
   $('btn-back').textContent     = u.quiz.back;
 
   var badges = $('intro-badges');
@@ -183,33 +183,30 @@ function applyLanguage() {
   }
 
   buildLangSwitch();
-  if (!elQuiz.classList.contains('hidden')) renderPair();
+  if (!elQuiz.classList.contains('hidden')) renderQuestion();
   if (!elResult.classList.contains('hidden')) renderResult();
 }
 
 /* ============================================================
-   Экран пары
+   Экран вопроса: сам вопрос и пять ответов
    ============================================================ */
-function renderPair() {
-  var i = state.index, item = IT()[i], u = U();
+function renderQuestion() {
+  var i = state.index, qu = QS()[i], u = U();
 
-  $('pair-counter').textContent = t(u.quiz.counter, { n: i + 1, m: TOTAL });
-  $('pair-fill').style.width = ((i + 1) / TOTAL * 100) + '%';
+  $('q-counter').textContent = t(u.quiz.counter, { n: i + 1, m: TOTAL });
+  $('q-fill').style.width = ((i + 1) / TOTAL * 100) + '%';
+  $('q-title').textContent = qu.q;
   $('btn-back').classList.toggle('hidden', i === 0);
 
-  /* sides[i] решает, какое утверждение показать первым — чтобы место
-     на экране не влияло на выбор */
-  var first  = state.sides[i] ? item.b : item.a;
-  var second = state.sides[i] ? item.a : item.b;
-
-  var box = $('pair');
+  var box = $('options');
   box.innerHTML = '';
-  [first, second].forEach(function (opt) {
+  state.order[i].forEach(function (optIdx) {
+    var opt = qu.o[optIdx];
     var card = document.createElement('div');
-    card.className = 'opt pair-card' + (state.picks[i] === opt.k ? ' chosen' : '');
+    card.className = 'opt love-opt' + (state.picks[i] === opt.k ? ' chosen' : '');
     card.setAttribute('role', 'button');
     card.setAttribute('tabindex', '0');
-    card.innerHTML = '<div class="pair-text">' + esc(opt.t) + '</div>';
+    card.innerHTML = '<div class="opt-text">' + esc(opt.t) + '</div>';
     var choose = function () { pick(opt.k); };
     card.addEventListener('click', choose);
     card.addEventListener('keydown', function (e) {
@@ -229,7 +226,7 @@ function pick(k) {
   save();
   if (state.index + 1 < TOTAL) {
     state.index++;
-    renderPair();
+    renderQuestion();
   } else {
     finish();
   }
@@ -239,7 +236,7 @@ function back() {
   if (state.index === 0) return;
   state.index--;
   save();
-  renderPair();
+  renderQuestion();
 }
 
 /* ============================================================
@@ -249,7 +246,7 @@ function save() {
   var d = load() || {};
   d.lang = state.lang;
   d.name = state.name;
-  d.progress = { index: state.index, picks: state.picks, sides: state.sides };
+  d.progress = { index: state.index, picks: state.picks, order: state.order };
   store(d);
 }
 
@@ -257,13 +254,13 @@ function saveRun() {
   var d = load() || {};
   d.lang = state.lang;
   d.name = state.name;
-  d.run = { picks: state.picks, sides: state.sides, name: state.name, date: state.date };
+  d.run = { picks: state.picks, order: state.order, name: state.name, date: state.date };
   delete d.progress;
   store(d);
 }
 
 /* ============================================================
-   Расчёт
+   Расчёт. Максимум одного языка — все 20 ответов, то есть 100%.
    ============================================================ */
 function calculate() {
   var scores = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
@@ -280,7 +277,7 @@ function calculate() {
     main: ranking[0],
     second: ranking[1],
     tie: ranking[0].n === ranking[1].n,
-    flat: (ranking[0].n - ranking[4].n) <= 3
+    flat: (ranking[0].n - ranking[4].n) <= 2
   };
 }
 
@@ -303,7 +300,7 @@ function renderResult() {
     var cls = idx === 0 ? ' top' : (idx === 1 ? ' second' : '');
     return '<div class="bar-row' + cls + '">' +
              '<div class="bar-name">' + esc(langs[row.k].name) + '</div>' +
-             '<div class="bar-val">' + row.pct + '% · ' + t(u.ofPicks, { n: row.n, m: TOTAL }) + '</div>' +
+             '<div class="bar-val">' + row.pct + '% · ' + esc(t(u.ofPicks, { n: row.n, m: TOTAL })) + '</div>' +
              '<div class="bar-track"><div class="bar-fill" data-w="' + row.pct + '"></div></div>' +
            '</div>';
   }).join('');
@@ -331,8 +328,9 @@ function renderResult() {
       '</div>' +
       '<div class="vector-score">' + esc(M.tagline) + ' · ' + esc(t(u.ofPicks, { n: r.main.n, m: TOTAL })) + '</div>' +
       '<p class="vector-desc">' + esc(M.desc) + '</p>' +
-      '<div class="spacer-s"></div><div class="pill"><p>' + esc(u.mirrorNote) + '</p></div>' +
       (note ? '<div class="spacer-s"></div>' + note : '') +
+      '<div class="spacer-s"></div>' +
+      '<div class="pill"><p>' + esc(u.mirrorNote) + '</p></div>' +
     '</div>' +
 
     '<div class="block">' +
@@ -459,27 +457,28 @@ function startTest() {
   state.index = 0;
   state.date  = '';
   state.picks = [];
-  state.sides = [];
+  state.order = [];
   for (var i = 0; i < TOTAL; i++) {
     state.picks.push(null);
-    state.sides.push(Math.random() < 0.5);
+    state.order.push(shuffle([0, 1, 2, 3, 4]));   // ответы перемешиваются
   }
   save();
   $('btn-resume').classList.add('hidden');
   showScreen(elQuiz);
-  renderPair();
+  renderQuestion();
 }
 
 $('btn-start').addEventListener('click', startTest);
 $('btn-back').addEventListener('click', back);
 elName.addEventListener('keydown', function (e) { if (e.key === 'Enter') startTest(); });
 
+/* Клавиши 1–5 выбирают ответ по порядку на экране */
 document.addEventListener('keydown', function (e) {
   if (elQuiz.classList.contains('hidden')) return;
   if (e.target && e.target.tagName === 'INPUT') return;
-  var cards = $('pair').querySelectorAll('.pair-card');
-  if (e.key === '1' && cards[0]) cards[0].click();
-  if (e.key === '2' && cards[1]) cards[1].click();
+  var n = parseInt(e.key, 10);
+  var cards = $('options').querySelectorAll('.love-opt');
+  if (n >= 1 && n <= 5 && cards[n - 1]) cards[n - 1].click();
 });
 
 (function init() {
@@ -489,17 +488,17 @@ document.addEventListener('keydown', function (e) {
   if (saved.name) elName.value = saved.name;
 
   var p = saved.progress;
-  if (p && p.picks && p.picks.length === TOTAL && p.sides && p.sides.length === TOTAL) {
+  if (p && p.picks && p.picks.length === TOTAL && p.order && p.order.length === TOTAL) {
     var btn = $('btn-resume');
     btn.classList.remove('hidden');
     state.index = p.index;
     btn.addEventListener('click', function () {
       state.name  = (elName.value || '').trim().slice(0, 40) || saved.name || '';
       state.picks = p.picks;
-      state.sides = p.sides;
+      state.order = p.order;
       state.index = p.index;
       showScreen(elQuiz);
-      renderPair();
+      renderQuestion();
     });
   }
 
@@ -508,7 +507,7 @@ document.addEventListener('keydown', function (e) {
     btnLast.classList.remove('hidden');
     btnLast.addEventListener('click', function () {
       state.picks = saved.run.picks;
-      state.sides = saved.run.sides || [];
+      state.order = saved.run.order || [];
       state.name  = saved.run.name || '';
       state.date  = saved.run.date;
       renderResult();
