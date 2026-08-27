@@ -331,6 +331,7 @@ function renderResult() {
       '</div>' +
       '<div class="vector-score">' + esc(M.tagline) + ' · ' + esc(t(u.ofPicks, { n: r.main.n, m: TOTAL })) + '</div>' +
       '<p class="vector-desc">' + esc(M.desc) + '</p>' +
+      '<div class="spacer-s"></div><div class="pill"><p>' + esc(u.mirrorNote) + '</p></div>' +
       (note ? '<div class="spacer-s"></div>' + note : '') +
     '</div>' +
 
