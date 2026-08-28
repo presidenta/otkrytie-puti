@@ -51,6 +51,7 @@ ui: {
     counter: 'Вопрос {n} из {m}',
     timerLabel: 'секунд',
     picked: 'Отмечено {n} из 3',
+    pickMore: 'Отметь ещё {n}',
     next: 'Далее →',
     finish: 'Показать результат',
     back: '← Назад'

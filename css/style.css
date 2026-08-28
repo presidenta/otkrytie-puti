@@ -771,10 +771,16 @@ body::after{
     content:""; position:absolute; left:16px; right:16px; bottom:0; height:1px;
     background:linear-gradient(90deg,transparent,rgba(212,175,55,.45),transparent);
   }
-  .quiz-top{ margin-bottom:8px; }
-  .timer-digits{ font-size:2.4rem; }
-  .q-counter{ padding-top:4px; }
+  .quiz-top{ margin-bottom:6px; }
+  .timer-digits{ font-size:1.9rem; letter-spacing:-1px; }
+  .timer-label{ display:none; }        /* подпись «секунд» на телефоне лишняя */
+  .q-counter{ padding-top:2px; font-size:.74rem; letter-spacing:2px; }
+  .timer-track{ height:6px; margin-bottom:5px; }
   .q-track{ margin-bottom:0; }
+
+  /* Карточка, доехавшая до липкой шапки, не должна прятаться под ней */
+  .q-title{ scroll-margin-top:96px; }
+  .opt{ scroll-margin-top:96px; }
 
   #btn-next{
     position:sticky;

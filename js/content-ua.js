@@ -66,6 +66,7 @@ ui: {
     counter:    'Питання {n} із {m}',
     timerLabel: 'секунд',
     picked:     'Позначено {n} із {m}',
+    pickMore:   'Познач ще {n}',
     next:       'Далі →',
     finish:     'Ваш шлях відкрито'
   },

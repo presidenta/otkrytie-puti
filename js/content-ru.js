@@ -76,6 +76,7 @@ ui: {
     counter:    'Вопрос {n} из {m}',
     timerLabel: 'секунд',
     picked:     'Отмечено {n} из {m}',
+    pickMore:   'Отметь ещё {n}',
     next:       'Далее →',
     finish:     'Ваш путь открыт'
   },

@@ -34,6 +34,7 @@ var state = {
   index: 0,
   picks: [],   // picks[i] = [номер ответа|null] по приоритетам
   order: [],   // order[i] = порядок показа ответов вопроса i
+  timedOut: [],   // на каких вопросах истекло время — там можно идти дальше неполным набором
   tick:  null,
   left:  CFG.timeLimit,
   date:  ''
@@ -96,6 +97,11 @@ function toast(text, icon, ms) {
   toastTimer = setTimeout(function () { elToast.classList.remove('show'); }, ms || 4000);
 }
 elToast.addEventListener('click', function () { elToast.classList.remove('show'); });
+
+/* Если что-то всё же сломается на чужом устройстве — человек увидит причину. */
+window.addEventListener('error', function (e) {
+  try { toast('Сбой: ' + (e.message || 'неизвестная ошибка'), '⚠️', 15000); } catch (x) {}
+});
 
 function showScreen(el) {
   [elIntro, elQuiz, elResult].forEach(function (s) { s.classList.add('hidden'); });
@@ -227,7 +233,13 @@ function resumeTimer() {
     if (state.left <= 0) {
       stopTimer();
       if (isComplete()) nextQuestion();
-      else toast(U().toast.timeout, '🕊', 5000);
+      else {
+        /* Время вышло, а отмечено меньше трёх — не запираем человека:
+           разрешаем идти дальше с тем, что он успел отметить. */
+        state.timedOut[state.index] = true;
+        paintPicks();
+        toast(U().toast.timeout, '🕊', 5000);
+      }
     }
   }, 1000);
 }
@@ -315,10 +327,13 @@ function paintPicks() {
   var last = state.index === TOTAL - 1;
   var u = U();
 
-  elNext.disabled = done !== CFG.picks;
-  elNext.textContent = done === CFG.picks
+  var enough  = done === CFG.picks;
+  var allowed = enough || (state.timedOut[state.index] && done > 0);
+
+  elNext.disabled = !allowed;
+  elNext.textContent = allowed
     ? (last ? u.quiz.finish : u.quiz.next)
-    : t(u.quiz.picked, { n: done, m: CFG.picks });
+    : t(u.quiz.pickMore, { n: CFG.picks - done });
 }
 
 function isComplete() {
@@ -571,11 +586,13 @@ function startTest() {
   state.date  = '';
   state.picks = [];
   state.order = [];
+  state.timedOut = [];
   for (var i = 0; i < TOTAL; i++) {
     var slots = [], j;
     for (j = 0; j < CFG.picks; j++) slots.push(null);
     state.picks.push(slots);
     state.order.push(shuffle([0, 1, 2, 3, 4]));   // ответы перемешиваются
+    state.timedOut.push(false);
   }
   save();
   $('btn-resume').classList.add('hidden');
@@ -583,7 +600,7 @@ function startTest() {
   renderQuestion();
 }
 
-elNext.addEventListener('click', function () { if (isComplete()) nextQuestion(); });
+elNext.addEventListener('click', function () { if (!elNext.disabled) nextQuestion(); });
 $('btn-start').addEventListener('click', startTest);
 $('btn-back').addEventListener('click', back);
 elName.addEventListener('keydown', function (e) { if (e.key === 'Enter') startTest(); });
@@ -613,6 +630,7 @@ document.addEventListener('keydown', function (e) {
       state.picks = p.picks;
       state.order = p.order;
       state.index = p.index;
+      state.timedOut = [];
       showScreen(elQuiz);
       renderQuestion();
     });

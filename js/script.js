@@ -36,6 +36,7 @@ var state = {
   qIndex: 0,
   order:  [],   // order[q] = перемешанные НОМЕРА вариантов вопроса q
   picks:  [],   // picks[q] = номера выбранных вариантов по приоритетам
+  timedOut: [],  // вопросы, где истекло время — там можно идти дальше неполным набором
   tick:   null,
   left:   CFG.timeLimit,
   date:   ''
@@ -333,6 +334,12 @@ function toast(text, icon, ms){
 }
 elToast.addEventListener('click', function(){ elToast.classList.remove('show'); });
 
+/* Если что-то всё же сломается на чужом устройстве — человек увидит причину
+   и сможет её переслать, вместо молчаливо застывшего экрана. */
+window.addEventListener('error', function(e){
+  try { toast('Сбой: ' + (e.message || 'неизвестная ошибка'), '⚠️', 15000); } catch(x){}
+});
+
 function showScreen(el){
   [elIntro, elQuiz, elResult].forEach(function(s){ s.classList.add('hidden'); });
   el.classList.remove('hidden');
@@ -354,7 +361,13 @@ function resumeTimer(){
     if (state.left <= 0){
       stopTimer();
       if (isComplete()) nextQuestion();
-      else toast(U().toast.timeout, '🕊', 6000);
+      else {
+        /* Время вышло, а отмечено меньше трёх — не запираем человека:
+           разрешаем идти дальше с тем, что он успел отметить. */
+        state.timedOut[state.qIndex] = true;
+        paintPicks();
+        toast(U().toast.timeout, '🕊', 6000);
+      }
     }
   }, 1000);
 }
@@ -443,10 +456,12 @@ function paintPicks(){
   var last = state.qIndex === Q().length - 1;
   var u = U();
 
-  elNext.disabled = done !== need;
-  elNext.textContent = done === need
+  var allowed = (done === need) || (state.timedOut[state.qIndex] && done > 0);
+
+  elNext.disabled = !allowed;
+  elNext.textContent = allowed
     ? (last ? u.quiz.finish : u.quiz.next)
-    : t(u.quiz.picked, { n: done, m: need });
+    : t(u.quiz.pickMore, { n: need - done });
 }
 
 function isComplete(){
@@ -1067,6 +1082,7 @@ function startQuiz(){
   state.order  = Q().map(function(q){
     return shuffle(q.options.map(function(o, i){ return i; }));      // Fisher–Yates
   });
+  state.timedOut = [];
   state.picks  = Q().map(function(q, i){
     var arr = [], n = picksOf(i);
     while (arr.length < n) arr.push(null);
@@ -1078,7 +1094,7 @@ function startQuiz(){
   renderQuestion();
 }
 
-elNext.addEventListener('click', function(){ if (isComplete()) nextQuestion(); });
+elNext.addEventListener('click', function(){ if (!elNext.disabled) nextQuestion(); });
 $('btn-start').addEventListener('click', startQuiz);
 elName.addEventListener('keydown', function(e){ if (e.key === 'Enter') startQuiz(); });
 
@@ -1146,6 +1162,7 @@ function boot(){
       state.order  = saved.progress.order;
       state.picks  = saved.progress.picks;
       state.qIndex = saved.progress.qIndex;
+      state.timedOut = [];
       showScreen(elQuiz);
       renderQuestion();
     });

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- СОБРАНО build.ps1 03.08.2026 05:13 · исходники: index.html + css/style.css + js/*.js -->
+<!-- СОБРАНО build.ps1 28.08.2026 23:52 · исходники: index.html + css/style.css + js/*.js -->
 <!--
   ============================================================================
   ОТКРЫТИЕ ПУТИ / ВІДКРИТТЯ ШЛЯХУ · Genesis Solar Life
@@ -796,10 +796,16 @@ body::after{
     content:""; position:absolute; left:16px; right:16px; bottom:0; height:1px;
     background:linear-gradient(90deg,transparent,rgba(212,175,55,.45),transparent);
   }
-  .quiz-top{ margin-bottom:8px; }
-  .timer-digits{ font-size:2.4rem; }
-  .q-counter{ padding-top:4px; }
+  .quiz-top{ margin-bottom:6px; }
+  .timer-digits{ font-size:1.9rem; letter-spacing:-1px; }
+  .timer-label{ display:none; }        /* подпись «секунд» на телефоне лишняя */
+  .q-counter{ padding-top:2px; font-size:.74rem; letter-spacing:2px; }
+  .timer-track{ height:6px; margin-bottom:5px; }
   .q-track{ margin-bottom:0; }
+
+  /* Карточка, доехавшая до липкой шапки, не должна прятаться под ней */
+  .q-title{ scroll-margin-top:96px; }
+  .opt{ scroll-margin-top:96px; }
 
   #btn-next{
     position:sticky;
@@ -1135,6 +1141,7 @@ ui: {
     counter:    'Вопрос {n} из {m}',
     timerLabel: 'секунд',
     picked:     'Отмечено {n} из {m}',
+    pickMore:   'Отметь ещё {n}',
     next:       'Далее →',
     finish:     'Ваш путь открыт'
   },
@@ -1907,6 +1914,7 @@ ui: {
     counter:    'Питання {n} із {m}',
     timerLabel: 'секунд',
     picked:     'Позначено {n} із {m}',
+    pickMore:   'Познач ще {n}',
     next:       'Далі →',
     finish:     'Ваш шлях відкрито'
   },
@@ -2638,6 +2646,7 @@ var state = {
   qIndex: 0,
   order:  [],   // order[q] = перемешанные НОМЕРА вариантов вопроса q
   picks:  [],   // picks[q] = номера выбранных вариантов по приоритетам
+  timedOut: [],  // вопросы, где истекло время — там можно идти дальше неполным набором
   tick:   null,
   left:   CFG.timeLimit,
   date:   ''
@@ -2935,6 +2944,12 @@ function toast(text, icon, ms){
 }
 elToast.addEventListener('click', function(){ elToast.classList.remove('show'); });
 
+/* Если что-то всё же сломается на чужом устройстве — человек увидит причину
+   и сможет её переслать, вместо молчаливо застывшего экрана. */
+window.addEventListener('error', function(e){
+  try { toast('Сбой: ' + (e.message || 'неизвестная ошибка'), '⚠️', 15000); } catch(x){}
+});
+
 function showScreen(el){
   [elIntro, elQuiz, elResult].forEach(function(s){ s.classList.add('hidden'); });
   el.classList.remove('hidden');
@@ -2956,7 +2971,13 @@ function resumeTimer(){
     if (state.left <= 0){
       stopTimer();
       if (isComplete()) nextQuestion();
-      else toast(U().toast.timeout, '🕊', 6000);
+      else {
+        /* Время вышло, а отмечено меньше трёх — не запираем человека:
+           разрешаем идти дальше с тем, что он успел отметить. */
+        state.timedOut[state.qIndex] = true;
+        paintPicks();
+        toast(U().toast.timeout, '🕊', 6000);
+      }
     }
   }, 1000);
 }
@@ -3045,10 +3066,12 @@ function paintPicks(){
   var last = state.qIndex === Q().length - 1;
   var u = U();
 
-  elNext.disabled = done !== need;
-  elNext.textContent = done === need
+  var allowed = (done === need) || (state.timedOut[state.qIndex] && done > 0);
+
+  elNext.disabled = !allowed;
+  elNext.textContent = allowed
     ? (last ? u.quiz.finish : u.quiz.next)
-    : t(u.quiz.picked, { n: done, m: need });
+    : t(u.quiz.pickMore, { n: need - done });
 }
 
 function isComplete(){
@@ -3669,6 +3692,7 @@ function startQuiz(){
   state.order  = Q().map(function(q){
     return shuffle(q.options.map(function(o, i){ return i; }));      // Fisher–Yates
   });
+  state.timedOut = [];
   state.picks  = Q().map(function(q, i){
     var arr = [], n = picksOf(i);
     while (arr.length < n) arr.push(null);
@@ -3680,7 +3704,7 @@ function startQuiz(){
   renderQuestion();
 }
 
-elNext.addEventListener('click', function(){ if (isComplete()) nextQuestion(); });
+elNext.addEventListener('click', function(){ if (!elNext.disabled) nextQuestion(); });
 $('btn-start').addEventListener('click', startQuiz);
 elName.addEventListener('keydown', function(e){ if (e.key === 'Enter') startQuiz(); });
 
@@ -3748,6 +3772,7 @@ function boot(){
       state.order  = saved.progress.order;
       state.picks  = saved.progress.picks;
       state.qIndex = saved.progress.qIndex;
+      state.timedOut = [];
       showScreen(elQuiz);
       renderQuestion();
     });

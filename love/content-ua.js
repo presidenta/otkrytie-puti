@@ -36,6 +36,7 @@ ui: {
     counter: 'Питання {n} із {m}',
     timerLabel: 'секунд',
     picked: 'Позначено {n} із 3',
+    pickMore: 'Познач ще {n}',
     next: 'Далі →',
     finish: 'Показати результат',
     back: '← Назад'
