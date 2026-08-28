@@ -855,3 +855,14 @@ body::after{
   .write-line{ border-bottom:1px solid #999; }
   .legal{ color:#777 !important; }
 }
+
+/* ---------- Гибридное название: строка системно-векторной типологии ---------- */
+.svp-line{
+  font-size:.78rem; letter-spacing:.4px; color:#5A636E;
+  margin:2px 0 6px;
+}
+.love-link{
+  color:var(--gold-core); text-decoration:underline; text-underline-offset:3px;
+  white-space:nowrap;
+}
+.love-link:hover{ color:var(--gold-light); }

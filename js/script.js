@@ -264,6 +264,23 @@ function validateContent(){
     });
   });
 
+  /* У каждого вектора должен быть блок отношений */
+  CFG.languages.forEach(function(code){
+    var pack = window.CONTENT[code];
+    if (!pack || !pack.types) return;
+    for (var ty = 1; ty <= 8; ty++){
+      var T2 = pack.types[ty];
+      if (!T2) continue;
+      if (typeof T2.svp !== 'string') problems.push(code + ', вектор ' + ty + ': нет поля svp');
+      if (!T2.love){ problems.push(code + ', вектор ' + ty + ': нет блока love'); continue; }
+      ['name','desc','give','trap','fit','lang'].forEach(function(f){
+        if (!T2.love[f]) problems.push(code + ', вектор ' + ty + ': love.' + f + ' пустое');
+      });
+      if (!T2.love.needs || T2.love.needs.length < 3)
+        problems.push(code + ', вектор ' + ty + ': love.needs короче трёх пунктов');
+    }
+  });
+
   /* Расширенный профиль: у каждого банка текстов должны быть все 8 векторов */
   CFG.languages.forEach(function(code){
     var pack = window.CONTENT[code];
@@ -751,7 +768,8 @@ function renderResult(){
     '<div class="split">' +
       '<div>' +
         '<div class="sub-label">' + esc(u.leadLabel) + '</div>' +
-        '<div class="vector-name shimmer-text">' + esc(Lt.name) + '</div>' +
+        '<div class="vector-name shimmer-text">' + esc(Lt.name) + ' — ' + esc(Lt.love.name) + '</div>' +
+        (Lt.svp ? '<div class="svp-line">' + esc(t(u.svpNote, { v: Lt.svp })) + '</div>' : '') +
         '<div class="vector-score">' + esc(t(u.score, { s: r.leadScore, m: MAX_SCORE, p: pct(r.leadScore) })) +
           ' · ' + esc(Lt.tagline) + '</div>' +
         '<p class="vector-desc">' + esc(Lt.desc) + '</p>' +
@@ -800,6 +818,38 @@ function renderResult(){
   /* ---------- 6 · операционный профиль, 7 · правила безопасности ---------- */
   blockProject() +
   blockSafety() +
+
+  /* ---------- 8 · второй фронт: отношения ---------- */
+  '<div class="block">' +
+    '<div class="block-title">' + esc(u.loveTitle) + '</div>' +
+    '<div class="sub-label">' + esc(u.loveRole) + '</div>' +
+    '<div class="vector-name shimmer-text" style="font-size:1.35rem">' + esc(Lt.love.name) + '</div>' +
+    '<div class="spacer-s"></div>' +
+    '<p class="vector-desc">' + esc(Lt.love.desc) + '</p>' +
+
+    '<div class="spacer-m"></div>' +
+    '<div class="sub-label">' + esc(u.loveNeeds) + '</div>' +
+    '<ul class="task-list">' +
+      Lt.love.needs.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') +
+    '</ul>' +
+
+    '<div class="spacer-m"></div>' +
+    '<div class="pill-grid">' +
+      '<div class="pill power"><h4>' + esc(u.loveGive) + '</h4><p>' + esc(Lt.love.give) + '</p></div>' +
+      '<div class="pill burn"><h4>' + esc(u.loveTrap) + '</h4><p>' + esc(Lt.love.trap) + '</p></div>' +
+    '</div>' +
+
+    '<div class="spacer-m"></div>' +
+    '<div class="sub-label">' + esc(u.loveFit) + '</div>' +
+    '<div class="quote-line">' + esc(Lt.love.fit) + '</div>' +
+
+    '<div class="spacer-m"></div>' +
+    '<div class="pill">' +
+      '<h4>' + esc(u.loveLang) + '</h4>' +
+      '<p><b>' + esc(Lt.love.lang) + '</b> — <a class="love-link" href="love/" target="_blank" rel="noopener">' +
+        esc(u.loveLangLink) + '</a></p>' +
+    '</div>' +
+  '</div>' +
 
   '<div class="actions no-print">' +
     '<button id="btn-copy" class="btn btn-emerald">' + esc(u.copy) + '</button>' +
@@ -989,7 +1039,14 @@ function buildReportText(){
     '',
     R.s4,
     t(R.roleLine, { role: Lt.role, tasks: Lt.tasks.join('; ') }),
-    t(R.allyLine, { name: St.name })
+    t(R.allyLine, { name: St.name }),
+    '',
+    U().result.loveTitle.replace(/^d+ · /, '').toUpperCase() + ':',
+    '• ' + U().result.loveRole + ': ' + Lt.love.name,
+    '• ' + Lt.love.desc,
+    '• ' + U().result.loveGive + ': ' + Lt.love.give,
+    '• ' + U().result.loveTrap + ': ' + Lt.love.trap,
+    '• ' + U().result.loveLang + ': ' + Lt.love.lang
   ].concat(psychReportLines(r)).concat([
     '',
     line,
