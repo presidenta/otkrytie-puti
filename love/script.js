@@ -140,7 +140,20 @@ function validate() {
       });
       for (var n = 1; n <= 5; n++) if (!seen[n]) problems.push(where + ': нет ответа для языка ' + n);
     });
-    for (var m = 1; m <= 5; m++) if (!pack.langs[m]) problems.push(code + ': нет описания языка ' + m);
+    /* Каждый язык должен иметь полный набор рекомендаций */
+    for (var m = 1; m <= 5; m++) {
+      var lg = pack.langs[m];
+      if (!lg) { problems.push(code + ': нет описания языка ' + m); continue; }
+      ['name','tagline','desc','critical','phrase','hurts'].forEach(function (f) {
+        if (!lg[f]) problems.push(code + ', язык ' + m + ': нет поля ' + f);
+      });
+      ['behave','never','self'].forEach(function (f) {
+        if (!lg[f] || !lg[f].length) problems.push(code + ', язык ' + m + ': пустой список ' + f);
+      });
+    }
+    ['dominant','dual','flat'].forEach(function (s) {
+      if (!pack.shapes || !pack.shapes[s]) problems.push(code + ': нет формы профиля ' + s);
+    });
   });
 
   if (CFG.picks > 5) problems.push('Нельзя отметить ' + CFG.picks + ' ответов из 5');
@@ -188,6 +201,13 @@ function applyLanguage() {
 
   $('intro-lead').innerHTML     = u.intro.lead;
   $('intro-note').innerHTML     = u.intro.note;
+
+  /* Вступление: зачем этот тест и что он снимает */
+  $('why-title').textContent    = u.intro.whyTitle;
+  $('why-body').innerHTML       = u.intro.why.map(function (p) { return '<p class="vector-desc why-p">' + p + '</p>'; }).join('');
+  $('closes-title').textContent = u.intro.closesTitle;
+  $('closes-list').innerHTML    = u.intro.closes.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('');
+  $('closes-after').textContent = u.intro.closesAfter;
   $('name-label').textContent   = u.intro.nameLabel;
   elName.placeholder            = u.intro.namePlaceholder;
   $('btn-start').textContent    = u.intro.start;
@@ -403,9 +423,18 @@ function calculate() {
     ranking: ranking,
     main: ranking[0],
     second: ranking[1],
-    tie: ranking[0].n === ranking[1].n,
-    flat: (ranking[0].n - ranking[4].n) <= Math.round(MAX_SCORE * 0.12)
+    shape: shapeOf(ranking)
   };
+}
+
+/* Форма профиля по разбросу процентов.
+   Проверяется сверху вниз, поэтому вариант всегда ровно один. */
+function shapeOf(ranking) {
+  var spread = ranking[0].pct - ranking[4].pct;
+  var gap    = ranking[0].pct - ranking[1].pct;
+  if (spread <= 15) return 'flat';
+  if (gap <= 10)    return 'dual';
+  return 'dominant';
 }
 
 /* ============================================================
@@ -433,14 +462,13 @@ function renderResult() {
            '</div>';
   }).join('');
 
-  var how = M.how.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('');
+  var list = function (arr) {
+    return '<ul class="task-list">' +
+           arr.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') +
+           '</ul>';
+  };
 
-  var note = '';
-  if (r.tie) {
-    note = '<div class="pill"><h4>' + esc(u.balancedTitle) + '</h4><p>' + esc(u.balancedText) + '</p></div>';
-  } else if (r.flat) {
-    note = '<div class="pill"><h4>' + esc(u.flatTitle) + '</h4><p>' + esc(u.flatText) + '</p></div>';
-  }
+  var shape = L().shapes[r.shape];
 
   elResult.innerHTML =
     '<div class="result-top">' +
@@ -448,6 +476,7 @@ function renderResult() {
       '<div class="result-name">' + t(esc(u.dateLine), { name: '<b>' + esc(r.name) + '</b>', date: r.date }) + '</div>' +
     '</div>' +
 
+    /* Главный язык и процент */
     '<div class="block">' +
       '<div class="sub-label">' + esc(u.mainLabel) + '</div>' +
       '<div class="love-main">' +
@@ -456,18 +485,42 @@ function renderResult() {
       '</div>' +
       '<div class="vector-score">' + esc(M.tagline) + ' · ' + esc(t(u.ofPicks, { n: r.main.n, m: MAX_SCORE })) + '</div>' +
       '<p class="vector-desc">' + esc(M.desc) + '</p>' +
-      (note ? '<div class="spacer-s"></div>' + note : '') +
+      '<div class="spacer-s"></div>' +
+      '<div class="pill"><h4>' + esc(u.shapeTitle) + ' · ' + esc(shape.title) + '</h4><p>' + esc(shape.text) + '</p></div>' +
       '<div class="spacer-s"></div>' +
       '<div class="pill"><p>' + esc(u.mirrorNote) + '</p></div>' +
     '</div>' +
 
+    /* Что критично + что ранит */
     '<div class="block">' +
-      '<div class="block-title">' + esc(u.howTitle) + '</div>' +
-      '<ul class="task-list">' + how + '</ul>' +
+      '<div class="block-title">' + esc(u.criticalTitle) + '</div>' +
+      '<p class="vector-desc">' + esc(M.critical) + '</p>' +
       '<div class="spacer-m"></div>' +
       '<div class="pill burn"><h4>' + esc(u.hurtsTitle) + '</h4><p>' + esc(M.hurts) + '</p></div>' +
     '</div>' +
 
+    /* Инструкция для близкого человека */
+    '<div class="block">' +
+      '<div class="block-title">' + esc(u.behaveTitle) + '</div>' +
+      list(M.behave) +
+      '<div class="spacer-m"></div>' +
+      '<div class="sub-label">' + esc(u.neverTitle) + '</div>' +
+      list(M.never) +
+    '</div>' +
+
+    /* Готовая фраза, которую можно переслать */
+    '<div class="block">' +
+      '<div class="block-title">' + esc(u.phraseTitle) + '</div>' +
+      '<blockquote class="love-phrase">' + esc(M.phrase) + '</blockquote>' +
+    '</div>' +
+
+    /* Рекомендации самому участнику */
+    '<div class="block">' +
+      '<div class="block-title">' + esc(u.selfTitle) + '</div>' +
+      list(M.self) +
+    '</div>' +
+
+    /* Дополняющий язык */
     '<div class="block">' +
       '<div class="sub-label">' + esc(u.secondLabel) + '</div>' +
       '<div class="vector-name silver">' + esc(S.name) + '</div>' +
@@ -475,9 +528,18 @@ function renderResult() {
       '<p class="vector-desc">' + esc(S.desc) + '</p>' +
     '</div>' +
 
+    /* Шкала по всем пяти */
     '<div class="block">' +
       '<div class="block-title">' + esc(u.allLabel) + '</div>' +
       '<div class="bars">' + bars + '</div>' +
+      '<div class="spacer-m"></div>' +
+      '<div class="pill"><p>' + esc(u.tankNote) + '</p></div>' +
+    '</div>' +
+
+    /* Если у близкого другой язык */
+    '<div class="block">' +
+      '<div class="block-title">' + esc(u.differsTitle) + '</div>' +
+      u.differsText.map(function (p) { return '<p class="vector-desc why-p">' + p + '</p>'; }).join('') +
     '</div>' +
 
     '<div class="actions no-print">' +
@@ -521,8 +583,14 @@ function buildReport() {
   r.ranking.forEach(function (row) {
     out.push('  ' + langs[row.k].name + ' — ' + row.pct + '%');
   });
-  out.push('', R.how);
-  M.how.forEach(function (x) { out.push('  • ' + x); });
+  out.push('', R.critical, '  ' + M.critical);
+  out.push('', R.behave);
+  M.behave.forEach(function (x) { out.push('  • ' + x); });
+  out.push('', R.never);
+  M.never.forEach(function (x) { out.push('  • ' + x); });
+  out.push('', R.self);
+  M.self.forEach(function (x) { out.push('  • ' + x); });
+  out.push('', R.phrase, '  «' + M.phrase + '»');
   out.push('', t(R.hurts, { text: M.hurts }), '', line, R.footer);
   return out.join('\n');
 }

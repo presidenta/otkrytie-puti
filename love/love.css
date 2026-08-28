@@ -33,3 +33,24 @@
     background:none !important; animation:none !important; filter:none !important;
   }
 }
+
+/* ---------- Вступление на первом экране ---------- */
+.why-p{ margin-bottom:12px; }
+.why-p:last-child{ margin-bottom:0; }
+.closes-after{ margin-top:14px; color:var(--muted); font-size:.92rem; }
+
+/* ---------- Готовая фраза, которую можно переслать ---------- */
+.love-phrase{
+  position:relative;
+  margin:4px 0 0;
+  padding:18px 20px 18px 26px;
+  border-left:3px solid var(--gold-core);
+  border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+  background:linear-gradient(135deg, rgba(212,175,55,.10), rgba(212,175,55,.02));
+  color:var(--text);
+  font-size:1.02rem; line-height:1.6; font-style:italic;
+}
+.love-phrase::before{
+  content:"«"; position:absolute; left:8px; top:6px;
+  font-size:1.6rem; font-style:normal; color:var(--gold-core); opacity:.7;
+}

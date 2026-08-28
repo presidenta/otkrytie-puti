@@ -3,14 +3,15 @@
   ============================================================================
   ПЯТЬ ЯЗЫКОВ ЛЮБВИ · Genesis Solar Life
   Устроен так же, как основная анкета «Открытие Пути»: таймер на вопрос
-  и приоритеты 1 · 2 · 3. Оформление целиком берётся из ../css/style.css,
+  и приоритеты 1 · 2 · 3. Оформление целиком из ../css/style.css,
   своё — только love.css.
 
-    content-ru.js / content-ua.js — 20 вопросов по 5 ответов
+    content-ru.js / content-ua.js — весь текст: вступление, 20 вопросов,
+                                    описания языков и рекомендации
     script.js                     — логика
 
   Концепция пяти языков любви — Гэри Чепмен.
-  Формулировки вопросов оригинальные.
+  Формулировки вопросов и рекомендаций оригинальные.
   ============================================================================
 -->
 <html lang="ru">
@@ -36,9 +37,20 @@
     <p class="brand-sub" id="brand-sub"></p>
   </header>
 
-  <!-- ЭКРАН 1 · СТАРТ -->
+  <!-- ЭКРАН 1 · СТАРТ. Все тексты приходят из языкового файла. -->
   <section id="screen-intro" class="screen">
     <p class="intro-lead" id="intro-lead"></p>
+
+    <!-- Зачем этот тест и что он снимает -->
+    <div class="block">
+      <div class="block-title" id="why-title"></div>
+      <div id="why-body"></div>
+      <div class="spacer-m"></div>
+      <div class="sub-label" id="closes-title"></div>
+      <ul class="task-list" id="closes-list"></ul>
+      <p class="vector-desc closes-after" id="closes-after"></p>
+    </div>
+
     <div class="intro-note" id="intro-note"></div>
     <div class="badges" id="intro-badges"></div>
 
