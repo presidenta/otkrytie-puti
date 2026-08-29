@@ -72,7 +72,22 @@ var MAX_SCORE = 0;     // максимум баллов по одному век
 function recalcLimits(){
   SCORED = [];
   Q().forEach(function(q, i){ if (q.scored !== false) SCORED.push(i); });
-  MAX_SCORE = SCORED.length * (CFG.scoring === 'weighted' ? CFG.weights[0] : 1);
+
+  /* Максимум по одному вектору — это сколько раз он ВООБЩЕ встречается
+     среди вариантов вопросов подсчёта. В блочной схеме вектор есть не в
+     каждом вопросе (в блоке всего четыре из восьми), поэтому считать по
+     числу вопросов нельзя: получится недостижимая цифра и заниженные
+     проценты. Схема сбалансирована, так что у всех векторов число
+     одинаковое, но берём максимум — на случай правки контента. */
+  var top = (CFG.scoring === 'weighted') ? CFG.weights[0] : 1;
+  var seen = {}, max = 0;
+  SCORED.forEach(function(i){
+    Q()[i].options.forEach(function(o){
+      seen[o.type] = (seen[o.type] || 0) + 1;
+      if (seen[o.type] > max) max = seen[o.type];
+    });
+  });
+  MAX_SCORE = max * top;
 }
 
 function picksOf(qi){
@@ -402,19 +417,74 @@ function paintTimer(){
 document.addEventListener('visibilitychange', function(){
   if (elQuiz.classList.contains('hidden')) return;
   if (document.hidden) stopTimer();
-  else { paintTimer(); resumeTimer(); }
+  else if (!Q()[state.qIndex] || !Q()[state.qIndex].noTimer){ paintTimer(); resumeTimer(); }
 });
 
 /* ============================================================
    5. ЭКРАН ВОПРОСА
    На экране только заголовок вопроса и карточки — без подсказок.
    ============================================================ */
+/* Баллы по векторам из уже отмеченных ответов.
+   Вынесено отдельно, потому что нужно дважды: в итоговом расчёте
+   и на экранах 39–40, которые собираются по ходу анкеты. */
+function scoreAll(){
+  var scores = {}, i;
+  for (i = 1; i <= 8; i++) scores[i] = 0;
+
+  state.picks.forEach(function(slots, qi){
+    if (Q()[qi].scored === false) return;               // паспорт и служебные экраны баллов не дают
+    slots.forEach(function(optIdx, slotPos){
+      if (optIdx === null || optIdx === undefined) return;
+      var ty = Q()[qi].options[optIdx].type;
+      scores[ty] += (CFG.scoring === 'weighted') ? CFG.weights[slotPos] : 1;
+    });
+  });
+
+  return Object.keys(scores).map(function(k){
+    return { type: +k, score: scores[k] };
+  }).sort(function(a, b){ return b.score - a.score || a.type - b.type; });
+}
+
+function rankNow(){ return scoreAll().map(function(x){ return x.type; }); }
+
+/* Экраны 39–40 собираются на лету: к этому моменту все вопросы подсчёта
+   уже отвечены, поэтому расклад окончательный, и человеку показывают
+   именно ЕГО сильную сторону, а не абстрактную черту. */
+function liveQuestion(qi){
+  var q = Q()[qi], ur = U().result, types = T();
+  var out = { title: q.title, options: q.options.map(function(o){ return o.text; }) };
+  if (!q.dynamic) return out;
+
+  var rank = rankNow();
+  var ty   = types[q.dynamic === 'scene' ? rank[1] : rank[0]];
+  var a    = ty && ty.acc;
+  if (!a) return out;                                   // контент не заполнен — показываем как есть
+
+  if (q.dynamic === 'advice'){
+    out.title   = t(ur.adviceTpl, { price: a.price, power: a.power });
+    out.options = out.options.map(function(x){ return x === '{fix}' ? a.fix : x; });
+  } else {
+    out.title   = t(ur.sceneTpl, { scene: a.scene, feel: a.feel });
+  }
+  return out;
+}
+
 function renderQuestion(keepTimer){
   var qi = state.qIndex, q = Q()[qi], u = U();
+  var live = liveQuestion(qi);
+  var need = picksOf(qi);
 
   $('q-counter').textContent = t(u.quiz.counter, { n: qi + 1, m: Q().length });
   $('q-fill').style.width = ((qi + 1) / Q().length * 100) + '%';
-  $('q-title').textContent = q.title;
+  $('q-title').textContent = live.title;
+
+  /* Подсказка о способе ответа: сколько вариантов отметить.
+     Это не намёк на «правильный» ответ, а инструкция — её просили. */
+  $('q-hint').textContent = (need === 1) ? u.quiz.hintOne : u.quiz.hintThree;
+
+  /* Экраны без таймера: последние три — не проекция, а осознанный
+     ответ про себя и про работу. Торопить там нечего. */
+  elQuiz.classList.toggle('no-timer', q.noTimer === true);
 
   elOptions.innerHTML = '';
   state.order[qi].forEach(function(optIdx){
@@ -423,7 +493,7 @@ function renderQuestion(keepTimer){
     card.setAttribute('role', 'button');
     card.setAttribute('tabindex', '0');
     card.dataset.opt = optIdx;
-    card.innerHTML = '<div class="slot"></div><div class="opt-text">' + esc(q.options[optIdx].text) + '</div>';
+    card.innerHTML = '<div class="slot"></div><div class="opt-text">' + esc(live.options[optIdx]) + '</div>';
     card.addEventListener('click', function(){ pick(optIdx); });
     card.addEventListener('keydown', function(e){
       if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); pick(optIdx); }
@@ -436,7 +506,8 @@ function renderQuestion(keepTimer){
   elOptions.classList.add('swap');
 
   paintPicks();
-  if (!keepTimer) startTimer();
+  if (q.noTimer){ stopTimer(); state.left = CFG.timeLimit; }
+  else if (!keepTimer) startTimer();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -478,7 +549,7 @@ function paintPicks(){
   elNext.disabled = !allowed;
   elNext.textContent = allowed
     ? (last ? u.quiz.finish : u.quiz.next)
-    : t(u.quiz.pickMore, { n: need - done });
+    : (need === 1 ? u.quiz.hintOne : t(u.quiz.pickMore, { n: need - done }));
 }
 
 function isComplete(){
@@ -535,21 +606,7 @@ function progressFits(p){
    7. РАСЧЁТ
    ============================================================ */
 function calculate(){
-  var scores = {}, i;
-  for (i = 1; i <= 8; i++) scores[i] = 0;
-
-  state.picks.forEach(function(slots, qi){
-    if (Q()[qi].scored === false) return;                 // вопросы 14–16 баллов не дают
-    slots.forEach(function(optIdx, slotPos){
-      if (optIdx === null) return;
-      var type = Q()[qi].options[optIdx].type;
-      scores[type] += (CFG.scoring === 'weighted') ? CFG.weights[slotPos] : 1;
-    });
-  });
-
-  var ranking = Object.keys(scores).map(function(k){
-    return { type: +k, score: scores[k] };
-  }).sort(function(a, b){ return b.score - a.score || a.type - b.type; });
+  var ranking = scoreAll();
 
   /* Дословный ответ: qId — id вопроса, slot — приоритет (0 = первый) */
   function optOf(qId, slot){
@@ -584,6 +641,37 @@ function calculate(){
     shadow:   triggerType(CFG.triggers.shadow)
   };
 
+  /* --- Принятие сильных сторон (экраны 39–40) -------------------------------
+     У выбранного варианта есть поле acc: 3 — принимает полностью,
+     0 — отвергает. Если экран не отвечен, поле остаётся null и блок
+     просто не выводится. */
+  function accOf(qId){
+    var o = optOf(qId, 0);
+    return (o && typeof o.acc === 'number') ? o.acc : null;
+  }
+  var accLead = accOf(CFG.accept.advice);
+  var accSub  = accOf(CFG.accept.scene);
+
+  /* --- Финансовая линия ----------------------------------------------------
+     Вопрос 37 — факт из прошлого, вариант 1 означает «такого не было»,
+     дальше четыре ступени. Вопрос 38 — сегодняшняя планка, те же четыре
+     ступени. Приводим к общей шкале и сравниваем. */
+  var earnedOpt = optOf(tr.earned, 0);
+  var incomeOpt = optOf(tr.income, 0);
+  var wasLevel  = earnedOpt ? earnedOpt.type - 1 : null;   // 0 = не было, 1…4 — ступени
+  var nowLevel  = incomeOpt ? incomeOpt.type     : null;   // 1…4 — те же ступени
+  var moneyKey  = null;
+  if (wasLevel !== null && nowLevel !== null){
+    if (wasLevel === 0)            moneyKey = 'moneyStart';
+    else if (nowLevel <  wasLevel) moneyKey = 'moneyDrop';
+    else if (nowLevel === wasLevel) moneyKey = 'moneyFlat';
+    else                            moneyKey = 'moneyGrow';
+  }
+
+  /* --- Подход к продукту (экран 41) ----------------------------------------
+     В векторы не идёт: это маркетинговый показатель. */
+  var prodOpt = optOf(CFG.product, 0);
+
   return {
     date:      state.date || today(),
     name:      state.name || U().intro.namePlaceholder,
@@ -596,11 +684,17 @@ function calculate(){
     dream:     [textOf(tr.dream, 0), textOf(tr.dream, 1), textOf(tr.dream, 2)],
     price:     textOf(tr.price, 0),
     commit:    textOf(tr.commitment, 0),
+    earned:    textOf(tr.earned, 0),
     income:    textOf(tr.income, 0),
     needHours: need,
     giveHours: give,
     readiness: need ? Math.min(100, Math.round(give / need * 100)) : 0,
-    trig:      trig
+    trig:      trig,
+    accLead:   accLead,
+    accSub:    accSub,
+    moneyKey:  moneyKey,
+    product:   prodOpt ? prodOpt.type : null,
+    productText: prodOpt ? prodOpt.text : '—'
   };
 }
 
@@ -655,6 +749,53 @@ function renderResult(){
       '<p class="vector-desc">' + esc(sh.text) + '</p>' +
       '<div class="spacer-s"></div>' +
       '<div class="pill"><p>' + esc(echo) + '</p></div>' +
+    '</div>';
+  }
+
+  /* ---------- Принятие своих сильных сторон (экраны 39–40) ----------
+     Один и тот же вектор даёт обстоятельность или медлительность —
+     разница только в том, принимает человек это в себе или воюет.
+     Именно поэтому мы спрашиваем отдельно, а не выводим из баллов. */
+  function blockAccept(){
+    if (r.accLead === null && r.accSub === null) return '';
+    var v = u.accVerdict;
+    var ok = function(a){ return a !== null && a >= 2; };
+    var note = (r.accLead === null || r.accSub === null) ? ''
+             : (!ok(r.accLead)) ? u.accNone
+             : (ok(r.accSub) ? u.accBoth : u.accHalf);
+
+    var row = function(label, ty, a){
+      if (a === null) return '';
+      return '<div>' +
+        '<div class="sub-label">' + esc(label) + '</div>' +
+        '<div class="vector-name' + (a >= 2 ? ' shimmer-text' : ' silver') + '" style="font-size:1.22rem">' +
+          esc(withSvp(ty)) + '</div>' +
+        '<p class="vector-desc">' + esc(v[a]) + '</p>' +
+      '</div>';
+    };
+
+    return '<div class="block">' +
+      '<div class="block-title">' + esc(u.accTitle) + '</div>' +
+      '<div class="split">' +
+        row(u.accLead, r.lead, r.accLead) +
+        row(u.accSub,  r.sub,  r.accSub) +
+      '</div>' +
+      (note ? '<div class="spacer-m"></div><div class="pill' +
+              (ok(r.accLead) ? '' : ' burn') + '"><p>' + esc(note) + '</p></div>' : '') +
+    '</div>';
+  }
+
+  /* ---------- Подход к продукту (экран 41) ----------
+     В подсчёт векторов не входит: это показатель для обучения продажам. */
+  function blockProduct(){
+    if (!r.product) return '';
+    return '<div class="block">' +
+      '<div class="block-title">' + esc(u.prodTitle) + '</div>' +
+      '<div class="sub-label">' + esc(u.prodAdvice) + '</div>' +
+      '<div class="quote-line">' + esc(r.productText) + '</div>' +
+      '<div class="spacer-s"></div>' +
+      '<div class="sub-label">' + esc(u.prodRead) + '</div>' +
+      '<p class="vector-desc">' + esc(u.prodMean[r.product]) + '</p>' +
     '</div>';
   }
 
@@ -756,8 +897,19 @@ function renderResult(){
     '<div class="sub-label">' + esc(t(u.commit, { id: tr.commitment })) + '</div>' +
     '<div class="quote-line">' + esc(r.commit) + '</div>' +
     '<div class="spacer-s"></div>' +
-    '<div class="sub-label">' + esc(t(u.income, { id: tr.income })) + '</div>' +
+    /* Финансовая линия: планка, которая уже была взята, и планка на сегодня.
+       Разрыв между ними говорит больше, чем каждая цифра по отдельности. */
+    '<div class="spacer-m"></div>' +
+    '<div class="sub-label">' + esc(u.moneyTitle) + '</div>' +
+    '<div class="spacer-s"></div>' +
+    '<div class="sub-label">' + esc(u.moneyWas) + '</div>' +
+    '<div class="quote-line">' + esc(r.earned) + '</div>' +
+    '<div class="spacer-s"></div>' +
+    '<div class="sub-label">' + esc(u.moneyReal) + '</div>' +
     '<div class="quote-line">' + esc(r.income) + '</div>' +
+    (r.moneyKey ? '<div class="spacer-s"></div><div class="pill' +
+                  (r.moneyKey === 'moneyGrow' ? '' : ' burn') +
+                  '"><p>' + esc(u[r.moneyKey]) + '</p></div>' : '') +
 
     '<div class="gauge ' + levelClass(r.readiness) + '">' +
       '<div class="gauge-head">' +
@@ -817,7 +969,11 @@ function renderResult(){
     '</div>' +
   '</div>' +
 
-  /* ---------- 3 · состояние на сейчас, 4 · стресс-профиль ---------- */
+  /* ---------- принятие сильных сторон, подход к продукту ---------- */
+  blockAccept() +
+  blockProduct() +
+
+  /* ---------- состояние на сейчас, стресс-профиль ---------- */
   blockState() +
   blockStress() +
 
@@ -841,36 +997,22 @@ function renderResult(){
   blockProject() +
   blockSafety() +
 
-  /* ---------- 8 · второй фронт: отношения ---------- */
+  /* ---------- Отношения: короткое наблюдение и переход ----------
+     Эта анкета мерила человека в деле, а не в отношениях. Поэтому здесь
+     только наблюдение по типу и честная приписка — а измеряет отношения
+     отдельный тест на языки любви, ссылка ведёт прямо в него. */
   '<div class="block">' +
     '<div class="block-title">' + esc(u.loveTitle) + '</div>' +
     '<div class="sub-label">' + esc(u.loveRole) + '</div>' +
     '<div class="vector-name shimmer-text" style="font-size:1.35rem">' + esc(Lt.love.name) + '</div>' +
     '<div class="spacer-s"></div>' +
     '<p class="vector-desc">' + esc(Lt.love.desc) + '</p>' +
-
+    '<div class="spacer-s"></div>' +
+    '<p class="svp-missing">' + esc(u.loveNote) + '</p>' +
     '<div class="spacer-m"></div>' +
-    '<div class="sub-label">' + esc(u.loveNeeds) + '</div>' +
-    '<ul class="task-list">' +
-      Lt.love.needs.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') +
-    '</ul>' +
-
-    '<div class="spacer-m"></div>' +
-    '<div class="pill-grid">' +
-      '<div class="pill power"><h4>' + esc(u.loveGive) + '</h4><p>' + esc(Lt.love.give) + '</p></div>' +
-      '<div class="pill burn"><h4>' + esc(u.loveTrap) + '</h4><p>' + esc(Lt.love.trap) + '</p></div>' +
-    '</div>' +
-
-    '<div class="spacer-m"></div>' +
-    '<div class="sub-label">' + esc(u.loveFit) + '</div>' +
-    '<div class="quote-line">' + esc(Lt.love.fit) + '</div>' +
-
-    '<div class="spacer-m"></div>' +
-    '<div class="pill">' +
-      '<h4>' + esc(u.loveLang) + '</h4>' +
-      '<p><b>' + esc(Lt.love.lang) + '</b> — <a class="love-link" href="love/" target="_blank" rel="noopener">' +
-        esc(u.loveLangLink) + '</a></p>' +
-    '</div>' +
+    '<a class="btn btn-emerald love-cta" href="love/" target="_blank" rel="noopener">' +
+      esc(t(u.loveCta, { lang: Lt.love.lang })) +
+    '</a>' +
   '</div>' +
 
   '<div class="actions no-print">' +
@@ -954,7 +1096,17 @@ function buildPayload(r){
     dream3:    r.dream[2],
     price:     r.price,
     commit:    r.commit,
+    earned:    r.earned,
     income:    r.income,
+    /* Финансовая линия и принятие сильных сторон — отдельными колонками,
+       чтобы по всей базе было видно статистику, а не только текст. */
+    moneyLine: r.moneyKey ? U().result[r.moneyKey] : '',
+    accLead:   r.accLead === null ? '' : r.accLead,
+    accSub:    r.accSub  === null ? '' : r.accSub,
+    /* Подход к продукту: номер варианта и его текст. Нужен для смены
+       маркетинга — по нему видно, сколько людей не пробуют продукт. */
+    product:   r.product || '',
+    productText: r.productText,
     state:     nameOf('shadow',   r.trig.shadow),
     sabotage:  nameOf('sabotage', r.trig.sabotage),
     coping:    nameOf('pressure', r.trig.pressure),
@@ -1049,9 +1201,13 @@ function buildReportText(){
     '   » ' + r.price,
     R.give,
     '   » ' + r.commit,
-    R.income,
-    '   » ' + r.income,
     t(R.readiness, { v: r.readiness, title: readinessLevel(r.readiness).title }),
+    '',
+    R.earned,
+    '   » ' + r.earned,
+    R.real,
+    '   » ' + r.income,
+    (r.moneyKey ? t(R.moneyGap, { line: U().result[r.moneyKey] }) : ''),
     '',
     R.s3,
     t(R.leadLine, { name: Lt.name + (Lt.svp ? ' — ' + Lt.svp : ''), score: r.leadScore }),
@@ -1068,6 +1224,8 @@ function buildReportText(){
     t(R.allyLine, { name: St.name })
   ])
   .concat(psychReportLines(r))
+  .concat(acceptReportLines(r))
+  .concat(productReportLines(r))
   .concat(loveReportLines(r))
   .concat([
     '',
@@ -1075,6 +1233,31 @@ function buildReportText(){
     R.footer
   ])
   .join('\n');
+}
+
+/* Принятие сильных сторон — экраны 39 и 40. */
+function acceptReportLines(r){
+  if (r.accLead === null && r.accSub === null) return [];
+  var u = U().result, R = U().report, types = T();
+  var out = ['', R.accTitle];
+  if (r.accLead !== null)
+    out.push(t(R.accLead, { name: types[r.lead].name, verdict: u.accVerdict[r.accLead] }));
+  if (r.accSub !== null)
+    out.push(t(R.accSub, { name: types[r.sub].name, verdict: u.accVerdict[r.accSub] }));
+  if (r.accLead !== null && r.accSub !== null){
+    var note = (r.accLead < 2) ? u.accNone : (r.accSub >= 2 ? u.accBoth : u.accHalf);
+    out.push(t(R.accNote, { text: note }));
+  }
+  return out;
+}
+
+/* Подход к продукту — экран 41, вне подсчёта векторов. */
+function productReportLines(r){
+  if (!r.product) return [];
+  var u = U().result, R = U().report;
+  return ['', R.prodTitle,
+          t(R.prodLine, { text: r.productText }),
+          t(R.prodRead, { text: u.prodMean[r.product] })];
 }
 
 /* Сводка всех восьми векторов системно-векторной типологии.
@@ -1095,10 +1278,8 @@ function loveReportLines(r){
   return ['', R.love,
           '• ' + u.loveRole  + ': ' + Lt.love.name,
           '• ' + Lt.love.desc,
-          '• ' + u.loveGive  + ': ' + Lt.love.give,
-          '• ' + u.loveTrap  + ': ' + Lt.love.trap,
-          '• ' + u.loveFit   + ': ' + Lt.love.fit,
-          '• ' + u.loveLang  + ': ' + Lt.love.lang];
+          '• ' + u.loveLang  + ': ' + Lt.love.lang,
+          '• ' + u.loveNote];
 }
 
 /* Расширенный профиль в текстовом отчёте: то же содержание, что на экране,
@@ -1184,7 +1365,12 @@ function startQuiz(){
   state.qIndex = 0;
   state.date   = '';
   state.order  = Q().map(function(q){
-    return shuffle(q.options.map(function(o, i){ return i; }));      // Fisher–Yates
+    var idx = q.options.map(function(o, i){ return i; });
+    /* Шкалы (ступени дохода, часы, степень принятия) перемешивать нельзя:
+       у них есть свой порядок, и он несёт смысл. Такие вопросы помечены
+       в контенте полем shuffle: false. */
+    if (q.shuffle === false) return idx;
+    return shuffle(idx);                                             // Fisher–Yates
   });
   state.timedOut = [];
   state.picks  = Q().map(function(q, i){
