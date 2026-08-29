@@ -4,27 +4,24 @@
   build.ps1 — сборка одного автономного файла для раздачи участникам
 ================================================================================
   ЗАЧЕМ ЭТО НУЖНО
-    Разрабатывать удобно в четырёх файлах (index.html + css + 2 js).
+    Разрабатывать удобно по файлам (index.html + css + js).
     А раздавать участникам нужно ОДИН файл: его можно переслать в Telegram,
     открыть на телефоне без интернета и без папок рядом.
-    Этот скрипт превращает первое во второе.
 
   КАК ЗАПУСТИТЬ
     Правой кнопкой по build.ps1 → «Выполнить с помощью PowerShell»
     либо в терминале:  powershell -ExecutionPolicy Bypass -File build.ps1
 
   РЕЗУЛЬТАТ
-    dist\index.html — один файл, ~80 КБ, работает офлайн.
+    dist\index.html — один файл, работает офлайн.
+
+  ВАЖНО: сам этот файл должен быть сохранён в UTF-8 СО ЗНАКОМ BOM — иначе
+  Windows PowerShell 5.1 прочитает его как ANSI и рассыплется на кириллице.
 ================================================================================
 #>
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
-
-# Кириллица в консоли Windows. ВАЖНО: сам этот файл должен быть сохранён
-# в UTF-8 СО ЗНАКОМ BOM — иначе Windows PowerShell 5.1 прочитает его как ANSI
-# и рассыплется на русских буквах. Если правите файл в редакторе — следите
-# за кодировкой (в VS Code: «UTF-8 with BOM» в правом нижнем углу).
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 
 function Read-Utf8($relativePath){
@@ -47,23 +44,28 @@ Write-Host ("  index.html      {0,7:N0} байт" -f $html.Length)
 Write-Host ("  style.css       {0,7:N0} байт" -f $css.Length)
 
 $out = $html
-$linkTag = '<link rel="stylesheet" href="css/style.css">'
-if ($out.IndexOf($linkTag) -lt 0) { throw "В index.html не найден тег: $linkTag" }
-$out = $out.Replace($linkTag, "<style>`r`n$css`r`n</style>")
+
+# В адресах стоит версия ?v=..., чтобы браузер участника не показывал
+# старый кэш после обновления. При сборке версия просто отбрасывается:
+# файлы всё равно встраиваются внутрь страницы.
+$linkRe = [regex]'<link rel="stylesheet" href="css/style\.css(\?v=[^"]*)?">'
+if (-not $linkRe.IsMatch($out)) { throw "В index.html не найден тег стилей" }
+$out = $linkRe.Replace($out, ("<style>`r`n" + $css + "`r`n</style>"), 1)
 
 foreach ($f in $jsFiles) {
     $code = Read-Utf8 $f
     $name = Split-Path $f -Leaf
     Write-Host ("  {0,-15} {1,7:N0} байт" -f $name, $code.Length)
 
-    $tag = '<script src="' + $f.Replace('\', '/') + '"></script>'
-    if ($out.IndexOf($tag) -lt 0) { throw "В index.html не найден тег: $tag" }
-    $out = $out.Replace($tag, "<script>`r`n// ===== $name =====`r`n$code`r`n</script>")
+    $src   = [regex]::Escape($f.Replace('\', '/'))
+    $tagRe = [regex]('<script src="' + $src + '(\?v=[^"]*)?"></script>')
+    if (-not $tagRe.IsMatch($out)) { throw "В index.html не найден тег скрипта: $name" }
+    $out = $tagRe.Replace($out, ("<script>`r`n// ===== " + $name + " =====`r`n" + $code + "`r`n</script>"), 1)
 }
 
 # Помечаем сборку, чтобы не путать её с исходником
 $stamp = "<!-- СОБРАНО build.ps1 {0} · исходники: index.html + css/style.css + js/*.js -->" -f (Get-Date -Format 'dd.MM.yyyy HH:mm')
-$out = $out.Replace('<!DOCTYPE html>', "<!DOCTYPE html>`r`n$stamp")
+$out = $out.Replace('<!DOCTYPE html>', ("<!DOCTYPE html>`r`n" + $stamp))
 
 # --- Записываем UTF-8 без BOM --------------------------------------------------
 $distDir = Join-Path $root 'dist'

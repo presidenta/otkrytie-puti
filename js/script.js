@@ -629,6 +629,14 @@ function renderResult(){
   var tr  = CFG.transcript;
   var pct = function(s){ return Math.round(s / MAX_SCORE * 100); };
 
+  /* Название вектора со скобкой системно-векторной типологии:
+     «Доминатор (Лидер) (уретральный)». У Инноватора соответствия нет —
+     скобка не добавляется. */
+  var withSvp = function(ty){
+    var T2 = types[ty];
+    return T2.name + (T2.svp ? ' (' + T2.svp + ')' : '');
+  };
+
   /* ---------- Расширенный психологический профиль ----------
      Каждый блок собирается из конкретного ответа. Если триггерный вопрос
      остался без ответа, блок молча не выводится, а не ломает отчёт. */
@@ -710,7 +718,7 @@ function renderResult(){
   var bars = r.ranking.map(function(row, idx){
     var cls = idx === 0 ? ' top' : (idx === 1 ? ' second' : '');
     return '<div class="bar-row' + cls + '">' +
-             '<div class="bar-name">' + esc(types[row.type].name) + '</div>' +
+             '<div class="bar-name">' + esc(withSvp(row.type)) + '</div>' +
              '<div class="bar-val">' + row.score + ' · ' + pct(row.score) + '%</div>' +
              '<div class="bar-track"><div class="bar-fill" data-w="' + pct(row.score) + '"></div></div>' +
            '</div>';
@@ -768,7 +776,7 @@ function renderResult(){
     '<div class="split">' +
       '<div>' +
         '<div class="sub-label">' + esc(u.leadLabel) + '</div>' +
-        '<div class="vector-name shimmer-text">' + esc(Lt.name) + ' — ' + esc(Lt.love.name) + '</div>' +
+        '<div class="vector-name shimmer-text">' + esc(withSvp(r.lead)) + ' — ' + esc(Lt.love.name) + '</div>' +
         (Lt.svp ? '<div class="svp-line">' + esc(t(u.svpNote, { v: Lt.svp })) + '</div>' : '') +
         '<div class="vector-score">' + esc(t(u.score, { s: r.leadScore, m: MAX_SCORE, p: pct(r.leadScore) })) +
           ' · ' + esc(Lt.tagline) + '</div>' +
@@ -776,7 +784,7 @@ function renderResult(){
       '</div>' +
       '<div>' +
         '<div class="sub-label">' + esc(u.subLabel) + '</div>' +
-        '<div class="vector-name silver">' + esc(St.name) + '</div>' +
+        '<div class="vector-name silver">' + esc(withSvp(r.sub)) + '</div>' +
         '<div class="vector-score">' + esc(t(u.score, { s: r.subScore, m: MAX_SCORE, p: pct(r.subScore) })) +
           ' · ' + esc(St.tagline) + '</div>' +
         '<p class="vector-desc"><b>' + esc(u.synergyWord) + '</b> ' +
@@ -1032,8 +1040,8 @@ function buildReportText(){
     t(R.readiness, { v: r.readiness, title: readinessLevel(r.readiness).title }),
     '',
     R.s3,
-    t(R.leadLine, { name: Lt.name, score: r.leadScore }),
-    t(R.subLine,  { name: St.name, score: r.subScore }),
+    t(R.leadLine, { name: Lt.name + (Lt.svp ? ' (' + Lt.svp + ')' : ''), score: r.leadScore }),
+    t(R.subLine,  { name: St.name + (St.svp ? ' (' + St.svp + ')' : ''), score: r.subScore }),
     t(R.powerLine, { text: Lt.power }),
     t(R.burnLine,  { text: Lt.burnout }),
     '',
