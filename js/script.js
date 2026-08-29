@@ -949,17 +949,10 @@ function renderResult(){
     '<div class="spacer-s"></div>' +
     '<div class="bars">' + bars + '</div>' +
 
-    /* Сводка по всем восьми векторам системно-векторной типологии.
-       Соответствие даётся сочетаниями: в самой этой типологии у человека
-       одновременно несколько векторов, поэтому один к одному не ложится. */
-    '<div class="spacer-m"></div>' +
-    '<div class="sub-label">' + esc(u.svpTableTitle) + '</div>' +
-    '<ul class="svp-table">' +
-      [1,2,3,4,5,6,7,8].map(function(ty){
-        return '<li><span class="svp-ours">' + esc(types[ty].name) + '</span>' +
-               '<span class="svp-theirs">' + esc(types[ty].svp) + '</span></li>';
-      }).join('') +
-    '</ul>' +
+    /* Отдельной таблицы соответствия здесь больше нет: в гистограмме выше
+       у каждого вектора уже стоит его название по системно-векторной
+       типологии, и таблица дословно это повторяла. Осталась только
+       короткая сноска — она объясняет, откуда берутся сочетания. */
     '<p class="svp-missing">' + esc(u.svpMissing) + '</p>' +
 
     '<div class="spacer-m"></div>' +
@@ -1216,7 +1209,7 @@ function buildReportText(){
     t(R.burnLine,  { text: Lt.burnout }),
     ''
   ]
-  .concat(svpReportLines())
+  .concat(rankingReportLines(r))
   .concat([
     '',
     R.s4,
@@ -1260,14 +1253,17 @@ function productReportLines(r){
           t(R.prodRead, { text: u.prodMean[r.product] })];
 }
 
-/* Сводка всех восьми векторов системно-векторной типологии.
-   Соответствие даётся сочетаниями: в самой этой типологии у человека
-   одновременно несколько векторов, поэтому один к одному не ложится. */
-function svpReportLines(){
+/* Все восемь векторов с баллами — текстовый аналог гистограммы.
+   На экране её видно, а в скопированном отчёте картинки нет, поэтому
+   здесь тот же расклад строками. Название по системно-векторной
+   типологии стоит в скобках, отдельной таблицы соответствия не нужно. */
+function rankingReportLines(r){
   var types = T();
   return [U().report.svpTable]
-    .concat([1, 2, 3, 4, 5, 6, 7, 8].map(function(ty){
-      return '  ' + types[ty].name + ' — ' + types[ty].svp;
+    .concat(r.ranking.map(function(row){
+      var T2 = types[row.type];
+      return '  ' + T2.name + (T2.svp ? ' (' + T2.svp + ')' : '') +
+             ' — ' + row.score + ' б. · ' + Math.round(row.score / MAX_SCORE * 100) + '%';
     }))
     .concat(['  ' + U().result.svpMissing]);
 }
