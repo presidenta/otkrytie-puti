@@ -796,6 +796,20 @@ function renderResult(){
     '<div class="sub-label">' + esc(u.histogram) + '</div>' +
     '<div class="spacer-s"></div>' +
     '<div class="bars">' + bars + '</div>' +
+
+    /* Сводка по всем восьми векторам системно-векторной типологии.
+       Соответствие даётся сочетаниями: в самой этой типологии у человека
+       одновременно несколько векторов, поэтому один к одному не ложится. */
+    '<div class="spacer-m"></div>' +
+    '<div class="sub-label">' + esc(u.svpTableTitle) + '</div>' +
+    '<ul class="svp-table">' +
+      [1,2,3,4,5,6,7,8].map(function(ty){
+        return '<li><span class="svp-ours">' + esc(types[ty].name) + '</span>' +
+               '<span class="svp-theirs">' + esc(types[ty].svp) + '</span></li>';
+      }).join('') +
+    '</ul>' +
+    '<p class="svp-missing">' + esc(u.svpMissing) + '</p>' +
+
     '<div class="spacer-m"></div>' +
     '<div class="pill-grid">' +
       '<div class="pill power"><h4>' + esc(u.power) + '</h4><p>' + esc(Lt.power) + '</p></div>' +
@@ -1040,26 +1054,51 @@ function buildReportText(){
     t(R.readiness, { v: r.readiness, title: readinessLevel(r.readiness).title }),
     '',
     R.s3,
-    t(R.leadLine, { name: Lt.name + (Lt.svp ? ' (' + Lt.svp + ')' : ''), score: r.leadScore }),
-    t(R.subLine,  { name: St.name + (St.svp ? ' (' + St.svp + ')' : ''), score: r.subScore }),
+    t(R.leadLine, { name: Lt.name + (Lt.svp ? ' — ' + Lt.svp : ''), score: r.leadScore }),
+    t(R.subLine,  { name: St.name + (St.svp ? ' — ' + St.svp : ''), score: r.subScore }),
     t(R.powerLine, { text: Lt.power }),
     t(R.burnLine,  { text: Lt.burnout }),
+    ''
+  ]
+  .concat(svpReportLines())
+  .concat([
     '',
     R.s4,
     t(R.roleLine, { role: Lt.role, tasks: Lt.tasks.join('; ') }),
-    t(R.allyLine, { name: St.name }),
-    '',
-    U().result.loveTitle.replace(/^d+ · /, '').toUpperCase() + ':',
-    '• ' + U().result.loveRole + ': ' + Lt.love.name,
-    '• ' + Lt.love.desc,
-    '• ' + U().result.loveGive + ': ' + Lt.love.give,
-    '• ' + U().result.loveTrap + ': ' + Lt.love.trap,
-    '• ' + U().result.loveLang + ': ' + Lt.love.lang
-  ].concat(psychReportLines(r)).concat([
+    t(R.allyLine, { name: St.name })
+  ])
+  .concat(psychReportLines(r))
+  .concat(loveReportLines(r))
+  .concat([
     '',
     line,
     R.footer
-  ]).join('\n');
+  ])
+  .join('\n');
+}
+
+/* Сводка всех восьми векторов системно-векторной типологии.
+   Соответствие даётся сочетаниями: в самой этой типологии у человека
+   одновременно несколько векторов, поэтому один к одному не ложится. */
+function svpReportLines(){
+  var types = T();
+  return [U().report.svpTable]
+    .concat([1, 2, 3, 4, 5, 6, 7, 8].map(function(ty){
+      return '  ' + types[ty].name + ' — ' + types[ty].svp;
+    }))
+    .concat(['  ' + U().result.svpMissing]);
+}
+
+/* Раздел отношений в текстовом отчёте — идёт после всех деловых. */
+function loveReportLines(r){
+  var u = U().result, R = U().report, Lt = T()[r.lead];
+  return ['', R.love,
+          '• ' + u.loveRole  + ': ' + Lt.love.name,
+          '• ' + Lt.love.desc,
+          '• ' + u.loveGive  + ': ' + Lt.love.give,
+          '• ' + u.loveTrap  + ': ' + Lt.love.trap,
+          '• ' + u.loveFit   + ': ' + Lt.love.fit,
+          '• ' + u.loveLang  + ': ' + Lt.love.lang];
 }
 
 /* Расширенный профиль в текстовом отчёте: то же содержание, что на экране,

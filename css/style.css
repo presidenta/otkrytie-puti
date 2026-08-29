@@ -866,3 +866,27 @@ body::after{
   white-space:nowrap;
 }
 .love-link:hover{ color:var(--gold-light); }
+
+/* ---------- Сводка соответствий системно-векторной типологии ---------- */
+.svp-table{
+  list-style:none; display:flex; flex-direction:column; gap:7px; margin-top:11px;
+}
+.svp-table li{
+  display:flex; justify-content:space-between; align-items:baseline; gap:12px;
+  padding:9px 12px; border-radius:10px;
+  background:rgba(255,255,255,.02); border:1px solid var(--border-soft);
+  font-size:.9rem;
+}
+.svp-ours{ color:var(--text-2); }
+.svp-theirs{
+  color:var(--gold-core); text-align:right; white-space:nowrap;
+  font-size:.86rem;
+}
+.svp-missing{
+  margin-top:12px; font-size:.86rem; color:var(--muted); line-height:1.55;
+}
+
+@media (max-width:479px){
+  .svp-table li{ flex-direction:column; gap:3px; }
+  .svp-theirs{ text-align:left; }
+}
