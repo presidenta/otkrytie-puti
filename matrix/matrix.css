@@ -1,0 +1,96 @@
+/* ============================================================================
+   МАТРИЦА ИГРОКА · Genesis Solar Life
+   matrix.css — ТОЛЬКО то, чего нет в общем ../css/style.css.
+   Палитра, золото, мерцание, кнопки, карточки ответов — всё оттуда.
+   ============================================================================ */
+
+/* --- Номер Аркана над вопросом ---------------------------------------------
+   Римская цифра — не украшение: по ней человек понимает, где он в колоде. */
+.q-arcana{
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2rem, 9vw, 3rem);
+  line-height: 1;
+  letter-spacing: .04em;
+  background: var(--grad-gold);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 7s linear infinite;
+  margin-bottom: 4px;
+  opacity: .85;
+}
+
+/* Один выбор вместо приоритетов: галочка вместо цифры */
+.opt[data-rank="✓"] .slot{ font-size: 1rem; }
+
+/* --- Уровень в результате --------------------------------------------------- */
+.level-row{
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.level-name{
+  font-size: clamp(1.35rem, 5.5vw, 1.9rem);
+  font-weight: 800;
+  letter-spacing: .01em;
+}
+.level-pct{
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2.2rem, 10vw, 3.2rem);
+  line-height: 1;
+  font-weight: 700;
+  background: var(--grad-gold);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 7s linear infinite;
+}
+
+/* --- Три шкалы ---------------------------------------------------------------
+   Полосы те же, что в основной анкете, но подписаны Арканами
+   и окрашены по уровню: сразу видно, какая семёрка проседает. */
+.bar-arcana{
+  display: block;
+  font-size: .72rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #6E7681;
+  margin-top: 2px;
+}
+.bar-row.high  .bar-fill{ opacity: 1; }
+.bar-row.mid   .bar-fill{ opacity: .78; }
+.bar-row.low   .bar-fill{ opacity: .5; }
+.bar-row.low   .bar-val { color: #C9A227; }
+.bar-row.no-data .bar-val{ color: #5A636E; }
+.bar-row.no-data .bar-track{ opacity: .35; }
+
+/* --- Шаг на неделю -----------------------------------------------------------
+   Самое конкретное место во всём результате, поэтому выделено. */
+.step-block{
+  border-left: 3px solid var(--gold, #D4AF37);
+}
+.step-text{
+  font-size: clamp(1.02rem, 3.6vw, 1.18rem);
+  line-height: 1.55;
+  color: #F3E5AB;
+  margin: 0;
+}
+
+/* --- Печать ------------------------------------------------------------------ */
+@media print{
+  .q-arcana, .level-pct{
+    -webkit-text-fill-color: #8A6417;
+    animation: none;
+  }
+}
+
+/* --- Узкие экраны ------------------------------------------------------------ */
+@media (max-width: 719px){
+  .level-row{ gap: 8px; }
+  .q-arcana{ margin-bottom: 2px; }
+}

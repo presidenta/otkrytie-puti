@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<!--
+  ============================================================================
+  МАТРИЦА ИГРОКА · Genesis Solar Life
+  22 Старших Аркана. Устроена так же, как «Открытие Пути» и «Пять языков
+  любви»: тот же тёмный фон с золотом, тот же движок, те же правила.
+
+    content-ru.js / content-ua.js — весь текст: вступление, 22 Аркана,
+                                    уровни, три семёрки, рекомендации
+    script.js                     — логика и подсчёт
+    matrix.css                    — только то, чего нет в общем стиле
+
+  Оформление целиком из ../css/style.css.
+  ============================================================================
+-->
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#07090E">
+<meta name="color-scheme" content="dark">
+<title>МАТРИЦА ИГРОКА | Genesis Solar Life</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23FBF5B7'/%3E%3Cstop offset='0.5' stop-color='%23D4AF37'/%3E%3Cstop offset='1' stop-color='%238A6417'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='14' y='6' width='36' height='52' rx='5' fill='url(%23g)'/%3E%3Cpath fill='%2307090E' d='M32 18 40 32 32 46 24 32Z'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../css/style.css?v=202608310001">
+<link rel="stylesheet" href="matrix.css?v=202608310001">
+</head>
+<body>
+
+<div class="app">
+
+  <header class="brand">
+    <div class="lang-switch no-print" id="lang-switch"></div>
+    <div class="brand-tag" id="brand-tag"></div>
+    <h1 class="brand-title shimmer-text" id="brand-title"></h1>
+    <div class="divider"><i></i></div>
+    <p class="brand-sub" id="brand-sub"></p>
+  </header>
+
+  <!-- ==================== ЭКРАН 1 · СТАРТ ==================== -->
+  <section id="screen-intro" class="screen">
+    <p class="intro-lead" id="intro-lead"></p>
+
+    <div class="block">
+      <div class="block-title" id="why-title"></div>
+      <div id="why-body"></div>
+      <div class="spacer-m"></div>
+      <div class="sub-label" id="gain-title"></div>
+      <ul class="task-list" id="gain-list"></ul>
+      <p class="vector-desc" id="gain-after"></p>
+    </div>
+
+    <div class="intro-note" id="intro-note"></div>
+    <div class="badges" id="intro-badges"></div>
+
+    <div class="field">
+      <label for="user-name" id="name-label"></label>
+      <input id="user-name" type="text" maxlength="40" autocomplete="name" spellcheck="false">
+    </div>
+
+    <div class="consent">
+      <label class="consent-label" for="consent-box">
+        <input type="checkbox" id="consent-box">
+        <span class="consent-mark" aria-hidden="true"></span>
+        <span id="consent-text"></span>
+      </label>
+      <button type="button" class="consent-link" id="consent-open"></button>
+    </div>
+
+    <button id="btn-start"  class="btn btn-gold pulse"></button>
+    <button id="btn-resume" class="btn btn-ghost hidden" style="margin-top:11px"></button>
+    <button id="btn-last"   class="btn btn-ghost hidden" style="margin-top:11px"></button>
+
+    <p class="legal" id="intro-author"></p>
+  </section>
+
+  <!-- ==================== ЭКРАН 2 · АРКАНЫ ==================== -->
+  <section id="screen-quiz" class="screen hidden">
+    <div class="quiz-head">
+      <div class="quiz-top">
+        <div class="q-counter" id="q-counter"></div>
+        <div class="timer-box">
+          <div class="timer-digits" id="timer-digits">45</div>
+          <div class="timer-label" id="timer-label"></div>
+        </div>
+      </div>
+
+      <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
+      <div class="q-track"><div class="q-fill" id="q-fill"></div></div>
+    </div>
+
+    <!-- Номер Аркана крупной римской цифрой: он и есть навигация по колоде -->
+    <div class="q-arcana" id="q-arcana"></div>
+    <div class="q-hint" id="q-hint"></div>
+    <h2 class="q-title" id="q-title"></h2>
+
+    <div class="options" id="options"></div>
+
+    <button id="btn-next" class="btn btn-gold" disabled></button>
+    <button id="btn-back" class="btn btn-ghost hidden" style="margin-top:11px"></button>
+  </section>
+
+  <!-- ==================== ЭКРАН 3 · РЕЗУЛЬТАТ ==================== -->
+  <section id="screen-result" class="screen hidden"></section>
+
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <div class="toast-icon" id="toast-icon">🎴</div>
+  <div class="toast-text" id="toast-text"></div>
+</div>
+
+<!-- Что именно уходит организатору. Живёт в языковых файлах,
+     поэтому работает и офлайн. -->
+<div class="modal hidden" id="modal">
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <h3 class="modal-title" id="modal-title"></h3>
+    <div class="modal-body" id="modal-body"></div>
+    <button type="button" class="btn btn-gold" id="modal-close"></button>
+  </div>
+</div>
+
+<script src="content-ru.js?v=202608310001"></script>
+<script src="content-ua.js?v=202608310001"></script>
+<script src="script.js?v=202608310001"></script>
+</body>
+</html>
