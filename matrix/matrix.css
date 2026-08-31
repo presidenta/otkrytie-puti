@@ -21,8 +21,55 @@
   opacity: .85;
 }
 
-/* Один выбор вместо приоритетов: галочка вместо цифры */
-.opt[data-rank="✓"] .slot{ font-size: 1rem; }
+/* --- ВЫБРАННЫЙ ОТВЕТ ---------------------------------------------------------
+   В общей анкете подсвечиваются карточки с приоритетами 1, 2 и 3. Здесь
+   выбор один, поэтому подсветку задаём сами — и сразу яркую: карточка
+   должна читаться как нажатая кнопка с другого конца комнаты. */
+.opt[data-rank]{
+  border-color: var(--gold-core, #D4AF37);
+  background:
+    linear-gradient(135deg, rgba(212,175,55,.20), rgba(212,175,55,.05)),
+    var(--card-3, #16181F);
+  box-shadow:
+    0 0 0 2px rgba(212,175,55,.45),
+    0 10px 30px rgba(212,175,55,.22);
+  transform: translateY(-1px);
+}
+
+/* Золотая полоса слева — видно даже боковым зрением */
+.opt[data-rank]::before{
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  background: var(--grad-gold);
+  background-size: 300% 100%;
+  animation: shimmer 7s linear infinite;
+}
+
+.opt[data-rank] .opt-text{
+  color: #FFF3CC;
+  font-weight: 600;
+}
+
+/* Галочка: заполненный золотой круг с тёмным знаком внутри */
+.opt[data-rank] .slot{
+  border: none;
+  border-radius: 50%;
+  background: var(--grad-gold);
+  background-size: 300% 100%;
+  animation: shimmer 7s linear infinite;
+  color: #07090E;
+  font-size: 1.5rem;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 4px 16px rgba(212,175,55,.4);
+  transform: scale(1.04);
+}
+
+/* Невыбранные ответы чуть глушим, чтобы выбранный выступал вперёд */
+.options.has-pick .opt:not([data-rank]){ opacity: .62; }
+.options.has-pick .opt:not([data-rank]):hover{ opacity: 1; }
 
 /* --- Уровень в результате --------------------------------------------------- */
 .level-row{

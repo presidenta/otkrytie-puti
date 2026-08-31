@@ -349,6 +349,10 @@ function paintPick() {
   var chosen = state.picks[state.index];
   var cards = elOptions.querySelectorAll('.opt');
 
+  /* Пока выбор не сделан, все карточки равны. Как только выбран один —
+     остальные приглушаются, и выбранный читается сразу. */
+  elOptions.classList.toggle('has-pick', chosen !== null);
+
   Array.prototype.forEach.call(cards, function (card) {
     var isOn = (+card.dataset.opt === chosen);
     if (isOn) { card.dataset.rank = '✓'; card.querySelector('.slot').textContent = '✓'; }
