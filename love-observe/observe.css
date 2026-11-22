@@ -1,0 +1,69 @@
+/* ============================================================================
+   ЯЗЫК ЛЮБВИ БЛИЗКОГО — стили, которых нет в общем ../css/style.css
+   ----------------------------------------------------------------------------
+   Карточки ответов, плашки 1·2·3, шкалы, печать и мобильная адаптация —
+   из общего файла. Здесь: выбор «за кого», строка «за кого» в шапке вопроса,
+   крупный процент и мелочи итога (как в ../love/love.css).
+   ============================================================================ */
+
+/* ---------- Выбор «за кого» ---------- */
+.who-list{ display:grid; gap:10px; }
+@media (min-width:560px){ .who-list{ grid-template-columns:repeat(3, 1fr); } }
+
+.who-btn{
+  display:flex; flex-direction:column; align-items:flex-start; gap:4px;
+  width:100%; padding:14px 16px; text-align:left; cursor:pointer;
+  border:1px solid var(--border); border-radius:var(--radius-sm);
+  background:var(--card); color:var(--text); font:inherit;
+  transition:border-color .2s, background .2s, transform .2s;
+}
+.who-btn:hover{ border-color:rgba(212,175,55,.5); }
+.who-btn:focus-visible{ outline:2px solid var(--gold-core); outline-offset:2px; }
+.who-btn.active{
+  border-color:var(--gold-core);
+  background:linear-gradient(135deg, rgba(212,175,55,.16), rgba(212,175,55,.04));
+  box-shadow:0 0 0 1px var(--gold-core) inset;
+}
+.who-label{ font-weight:700; font-size:1.02rem; }
+.who-btn.active .who-label{ color:var(--gold-light); }
+.who-hint{ color:var(--muted); font-size:.86rem; line-height:1.35; }
+
+.obs-note{ margin-top:14px; color:var(--muted); font-size:.92rem; }
+.obs-note a{ color:var(--gold-warm); }
+
+/* ---------- Шапка вопроса: за кого отвечаем ---------- */
+.q-who{
+  color:var(--muted); font-size:.8rem; text-align:right;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:55%;
+}
+
+/* ---------- Итог ---------- */
+.love-main{
+  display:flex; align-items:baseline; justify-content:space-between;
+  gap:16px; flex-wrap:wrap;
+}
+.love-pct{
+  font-family:var(--mono); font-weight:800; line-height:1;
+  font-size:clamp(2.2rem, 8vw, 3rem);
+  font-variant-numeric:tabular-nums;
+  background:var(--grad-gold); background-size:300% 100%;
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  animation:shimmer 6s linear infinite;
+  filter:drop-shadow(0 0 16px rgba(212,175,55,.3));
+}
+.obs-gap{ margin-top:16px; }
+.why-p{ margin-bottom:12px; }
+.why-p:last-child{ margin-bottom:0; }
+.obs-pairs{ margin-top:12px; }
+
+@media (max-width:719px){
+  #btn-skip, #btn-back{ margin-top:14px; }
+}
+
+@media print{
+  #btn-skip, #btn-back{ display:none !important; }
+  .love-pct{
+    -webkit-text-fill-color:#8A6417 !important; color:#8A6417 !important;
+    background:none !important; animation:none !important; filter:none !important;
+  }
+}
