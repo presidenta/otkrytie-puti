@@ -18,7 +18,7 @@
 'use strict';
 
 var CFG = {
-  languages: ['ru', 'ua'],
+  languages: ['ru', 'ua', 'en'],
   defaultLang: 'ru',
   storeKey: 'genesis_love_observe_v1',
   groups: ['child', 'teen', 'adult'],
