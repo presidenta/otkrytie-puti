@@ -393,7 +393,7 @@ questions: [
          { t: 'They take on part of my load', k: 4 },
          { t: 'They take my hand, they touch me', k: 5 } ] },
 
-  { q: 'What would you ask someone close for first — and what next?',
+  { q: 'What would you ask someone close for first, and what next? Choose up to three: 1 — what matters most to you, then the less important.',
     o: [ { t: 'Tell me warm words more often', k: 1 },
          { t: 'Spend more time with me', k: 2 },
          { t: 'Delight me with little tokens of attention', k: 3 },
