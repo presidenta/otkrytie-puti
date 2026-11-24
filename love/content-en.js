@@ -374,10 +374,10 @@ questions: [
 
   { q: 'What is hardest for you to forgive?',
     o: [ { t: 'Hurtful words', k: 1 },
-         { t: 'Being neglected for the sake of other things', k: 2 },
-         { t: 'Being forgotten on an important day', k: 3 },
-         { t: 'Not being helped when it was hard for me', k: 4 },
-         { t: 'Coldness and distance', k: 5 } ] },
+         { t: 'Never having time for me — something else always came first', k: 2 },
+         { t: 'Being forgotten on an important day — no gift, no sign of attention', k: 3 },
+         { t: 'Not being helped with things when it was hard for me', k: 4 },
+         { t: 'Being pushed away — no hug, no touch when I needed it', k: 5 } ] },
 
   { q: 'What do you do first when you are glad to see someone?',
     o: [ { t: 'I say how much I missed them', k: 1 },
@@ -393,7 +393,7 @@ questions: [
          { t: 'They take on part of my load', k: 4 },
          { t: 'They take my hand, they touch me', k: 5 } ] },
 
-  { q: 'If you could ask someone close for only one thing — what would you ask?',
+  { q: 'What would you ask someone close for first — and what next?',
     o: [ { t: 'Tell me warm words more often', k: 1 },
          { t: 'Spend more time with me', k: 2 },
          { t: 'Delight me with little tokens of attention', k: 3 },
