@@ -165,7 +165,7 @@ langs: {
     desc: 'You need not presence but engagement. A person can be in the same room with you and still be absent — you feel it instantly. A real gift for you is not a thing but an evening in which nobody rushes you and nothing distracts.',
     critical: 'You need engagement, not presence. A person can live in the same flat with you and be a thousand miles away — you feel it instantly and experience it as rejection.',
     behave: [
-      'Put the phone away during a conversation — screen down, not “I am listening”',
+      'Put the phone away during a conversation — screen down, instead of saying “I am listening” while looking at it',
       'Plan time with you in advance, not with whatever is left over',
       'Listen to the end, without interrupting or rushing to fix the problem',
       'Ask questions about you, not only talk about themselves',
